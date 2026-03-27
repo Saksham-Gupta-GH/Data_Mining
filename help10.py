@@ -584,45 +584,42 @@ def get_tab10_colors(n):
 
 tab10_colors = get_tab10_colors(K_FINAL)
 
-# Plot 10: K-Means Scatter (FIXED colormap)
-fig, ax = plt.subplots(figsize=(9, 6))
-plot_sub = df_feat[(df_feat["pl_rade"] < 20) & (df_feat["pl_eqt"] < 3000)].copy()
+# Plot 10: K-Means Clusters (PCA Projection) 🔥
+from sklearn.decomposition import PCA
 
-# 🔥 ADD THIS (IMPORTANT)
-plot_sub["log_rade"] = np.log1p(plot_sub["pl_rade"])
-plot_sub["log_eqt"] = np.log1p(plot_sub["pl_eqt"])
-cmap_km  = plt.cm.get_cmap("tab10", K_FINAL)
-sc = ax.scatter(plot_sub["log_rade"], plot_sub["log_eqt"],
-                c=plot_sub["km_cluster"], cmap=cmap_km,
-                vmin=-0.5, vmax=K_FINAL - 0.5,
-                s=18, alpha=0.8,
-                edgecolors="black", linewidths=0.2)
-ax.axhline(np.log1p(288), color="black", linestyle="--", linewidth=1.5, alpha=0.6, label="Earth Temp")
-ax.axvline(np.log1p(1.0), color="black", linestyle="--", linewidth=1.5, alpha=0.6, label="Earth Radius")
-ax.scatter([np.log1p(1.0)], [np.log1p(288)],
-           color="cyan", s=300, marker="*",
-           edgecolors="navy", linewidth=2,
-           label="Earth", zorder=10)
-for p in TARGET_PLANETS:
-    row = df_feat[df_feat["pl_name"] == p]
-    if not row.empty:
-        r, t = row["pl_rade"].values[0], row["pl_eqt"].values[0]
-        if r < 20 and t < 3000:
-            ax.scatter(np.log1p(r), np.log1p(t),
-           color="red", s=120, zorder=12,
-           marker="D", edgecolors="black", linewidths=1.2)
-            ax.text(np.log1p(r), np.log1p(t), p, fontsize=6.5, alpha=0.85)
+pca = PCA(n_components=2)
+X_pca = pca.fit_transform(X_scaled)
+
+fig, ax = plt.subplots(figsize=(9, 6))
+
+sc = ax.scatter(
+    X_pca[:, 0],
+    X_pca[:, 1],
+    c=df_feat["km_cluster"],
+    cmap=plt.cm.get_cmap("tab10", K_FINAL),
+    vmin=-0.5,
+    vmax=K_FINAL - 0.5,
+    s=18,
+    alpha=0.8,
+    edgecolors="black",
+    linewidths=0.2
+)
+
+
+
 cbar = plt.colorbar(sc, ax=ax, ticks=range(K_FINAL))
 cbar.set_label("K-Means Cluster")
-ax.set_xlabel("log(Planet Radius)", fontsize=11)
-ax.set_ylabel("log(Temperature)", fontsize=11)
-ax.set_title(f"K-Means Clustering (k={K_FINAL}, 17 Features)  diamond=target planets",
-             fontsize=12, fontweight="bold")
-ax.legend(); ax.grid(True, alpha=0.3)
+
+ax.set_xlabel("PCA Component 1")
+ax.set_ylabel("PCA Component 2")
+ax.set_title("K-Means Clusters (PCA Projection — 17D → 2D)", fontweight="bold")
+
+
+ax.grid(True, alpha=0.3)
+
 plt.tight_layout()
-plt.savefig("plot10_kmeans_scatter.png", dpi=150)
+plt.savefig("plot10_kmeans_pca.png", dpi=150)
 plt.show()
-print("  -> Plot 10 saved: K-Means Scatter")
 
 # Plot 11: Cluster Sizes (FIXED colormap)
 fig, ax = plt.subplots(figsize=(8, 4))
