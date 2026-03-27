@@ -111,391 +111,391 @@ if missing_targets:
 print("\nDescriptive Statistics:")
 print(df_feat[FEATURES].describe().round(3).to_string())
 
-# ============================================================
-# SECTION 2: EXPLORATORY DATA VISUALIZATION
-# ============================================================
-print("\n" + "=" * 70)
-print("SECTION 2: EXPLORATORY DATA VISUALIZATION")
-print("=" * 70)
+# # ============================================================
+# # SECTION 2: EXPLORATORY DATA VISUALIZATION
+# # ============================================================
+# print("\n" + "=" * 70)
+# print("SECTION 2: EXPLORATORY DATA VISUALIZATION")
+# print("=" * 70)
 
-# Plot 1: Missing Value Bar Chart
-fig, ax = plt.subplots(figsize=(14, 4))
-miss_pct = (df[FEATURES].isnull().mean() * 100).sort_values(ascending=False)
-colors = ["#e74c3c" if v > 50 else "#f39c12" if v > 20 else "#2ecc71" for v in miss_pct]
-ax.bar(miss_pct.index, miss_pct.values, color=colors, edgecolor="black", linewidth=0.7)
-ax.set_xlabel("Feature", fontsize=11)
-ax.set_ylabel("Missing (%)", fontsize=11)
-ax.set_title("Missing Value Percentage per Feature (Full Dataset)", fontsize=13, fontweight="bold")
-ax.tick_params(axis="x", rotation=45)
-ax.axhline(50, color="red", linestyle="--", linewidth=1.2, label="50% threshold")
-ax.legend()
-plt.tight_layout()
-plt.savefig("plot01_missing_values.png", dpi=150)
-plt.show()
-print("  -> Plot 1 saved: Missing Value Bar Chart")
+# # Plot 1: Missing Value Bar Chart
+# fig, ax = plt.subplots(figsize=(14, 4))
+# miss_pct = (df[FEATURES].isnull().mean() * 100).sort_values(ascending=False)
+# colors = ["#e74c3c" if v > 50 else "#f39c12" if v > 20 else "#2ecc71" for v in miss_pct]
+# ax.bar(miss_pct.index, miss_pct.values, color=colors, edgecolor="black", linewidth=0.7)
+# ax.set_xlabel("Feature", fontsize=11)
+# ax.set_ylabel("Missing (%)", fontsize=11)
+# ax.set_title("Missing Value Percentage per Feature (Full Dataset)", fontsize=13, fontweight="bold")
+# ax.tick_params(axis="x", rotation=45)
+# ax.axhline(50, color="red", linestyle="--", linewidth=1.2, label="50% threshold")
+# ax.legend()
+# plt.tight_layout()
+# plt.savefig("plot01_missing_values.png", dpi=150)
+# plt.show()
+# print("  -> Plot 1 saved: Missing Value Bar Chart")
 
-# Plot 2: Feature Distributions
-fig, axes = plt.subplots(4, 5, figsize=(20, 14))
-axes = axes.flatten()
-for i, col in enumerate(FEATURES):
-    axes[i].hist(df_feat[col], bins=40, color="#3498db", edgecolor="white", linewidth=0.4)
-    axes[i].set_title(col, fontsize=9, fontweight="bold")
-    axes[i].set_xlabel("Value", fontsize=7)
-    axes[i].set_ylabel("Count", fontsize=7)
-    axes[i].tick_params(labelsize=7)
-for j in range(len(FEATURES), len(axes)):
-    axes[j].set_visible(False)
-plt.suptitle("Distribution of All 17 Features (after imputation)", fontsize=14,
-             fontweight="bold", y=1.01)
-plt.tight_layout()
-plt.savefig("plot02_feature_distributions.png", dpi=150, bbox_inches="tight")
-plt.show()
-print("  -> Plot 2 saved: Feature Distributions")
+# # Plot 2: Feature Distributions
+# fig, axes = plt.subplots(4, 5, figsize=(20, 14))
+# axes = axes.flatten()
+# for i, col in enumerate(FEATURES):
+#     axes[i].hist(df_feat[col], bins=40, color="#3498db", edgecolor="white", linewidth=0.4)
+#     axes[i].set_title(col, fontsize=9, fontweight="bold")
+#     axes[i].set_xlabel("Value", fontsize=7)
+#     axes[i].set_ylabel("Count", fontsize=7)
+#     axes[i].tick_params(labelsize=7)
+# for j in range(len(FEATURES), len(axes)):
+#     axes[j].set_visible(False)
+# plt.suptitle("Distribution of All 17 Features (after imputation)", fontsize=14,
+#              fontweight="bold", y=1.01)
+# plt.tight_layout()
+# plt.savefig("plot02_feature_distributions.png", dpi=150, bbox_inches="tight")
+# plt.show()
+# print("  -> Plot 2 saved: Feature Distributions")
 
-# Plot 3: Correlation Heatmap
-fig, ax = plt.subplots(figsize=(13, 10))
-corr = df_feat[FEATURES].corr()
-mask = np.triu(np.ones_like(corr, dtype=bool))
-sns.heatmap(corr, mask=mask, annot=True, fmt=".2f", cmap="coolwarm",
-            linewidths=0.5, ax=ax, annot_kws={"size": 7}, vmin=-1, vmax=1, center=0)
-ax.set_title("Feature Correlation Heatmap (17 Features)", fontsize=13, fontweight="bold")
-plt.tight_layout()
-plt.savefig("plot03_correlation_heatmap.png", dpi=150)
-plt.show()
-print("  -> Plot 3 saved: Correlation Heatmap")
+# # Plot 3: Correlation Heatmap
+# fig, ax = plt.subplots(figsize=(13, 10))
+# corr = df_feat[FEATURES].corr()
+# mask = np.triu(np.ones_like(corr, dtype=bool))
+# sns.heatmap(corr, mask=mask, annot=True, fmt=".2f", cmap="coolwarm",
+#             linewidths=0.5, ax=ax, annot_kws={"size": 7}, vmin=-1, vmax=1, center=0)
+# ax.set_title("Feature Correlation Heatmap (17 Features)", fontsize=13, fontweight="bold")
+# plt.tight_layout()
+# plt.savefig("plot03_correlation_heatmap.png", dpi=150)
+# plt.show()
+# print("  -> Plot 3 saved: Correlation Heatmap")
 
-# Plot 4 (Improved): Correlation Matrix (Core Features)
-core5 = ["pl_rade", "pl_eqt", "pl_insol", "pl_bmasse", "st_teff"]
+# # Plot 4 (Improved): Correlation Matrix (Core Features)
+# core5 = ["pl_rade", "pl_eqt", "pl_insol", "pl_bmasse", "st_teff"]
 
-fig, ax = plt.subplots(figsize=(10, 8))
-corr = df_feat[core5].corr()
+# fig, ax = plt.subplots(figsize=(10, 8))
+# corr = df_feat[core5].corr()
 
-sns.heatmap(
-    corr,
-    annot=True,
-    fmt=".2f",
-    cmap="coolwarm",
-    linewidths=0.5,
-    cbar_kws={"label": "Correlation"},
-    ax=ax
-)
+# sns.heatmap(
+#     corr,
+#     annot=True,
+#     fmt=".2f",
+#     cmap="coolwarm",
+#     linewidths=0.5,
+#     cbar_kws={"label": "Correlation"},
+#     ax=ax
+# )
 
-ax.set_title("Correlation Matrix (Core Habitability Features)",
-             fontsize=13, fontweight="bold")
+# ax.set_title("Correlation Matrix (Core Habitability Features)",
+#              fontsize=13, fontweight="bold")
 
-plt.tight_layout()
-plt.savefig("plot04_corr_core5.png", dpi=150)
-plt.show()
+# plt.tight_layout()
+# plt.savefig("plot04_corr_core5.png", dpi=150)
+# plt.show()
 
-# Plot 5: Box Plots
-fig, axes = plt.subplots(1, 3, figsize=(16, 5))
-for ax, col, clr in zip(axes,
-                         ["pl_rade", "pl_eqt", "pl_insol"],
-                         ["#e74c3c", "#f39c12", "#2ecc71"]):
-    q1, q3 = df_feat[col].quantile(0.25), df_feat[col].quantile(0.75)
-    iqr = q3 - q1
-    trimmed = df_feat[(df_feat[col] >= q1 - 3*iqr) & (df_feat[col] <= q3 + 3*iqr)][col]
-    ax.boxplot(trimmed, patch_artist=True,
-               boxprops=dict(facecolor=clr, alpha=0.6),
-               medianprops=dict(color="black", linewidth=2))
-    ax.set_title(col, fontsize=11, fontweight="bold")
-    ax.set_ylabel("Value")
-    ax.grid(True, alpha=0.3)
-plt.suptitle("Box Plots: Key Habitability Variables (IQR-trimmed)",
-             fontsize=13, fontweight="bold")
-plt.tight_layout()
-plt.savefig("plot05_boxplots.png", dpi=150)
-plt.show()
-print("  -> Plot 5 saved: Box Plots")
+# # Plot 5: Box Plots
+# fig, axes = plt.subplots(1, 3, figsize=(16, 5))
+# for ax, col, clr in zip(axes,
+#                          ["pl_rade", "pl_eqt", "pl_insol"],
+#                          ["#e74c3c", "#f39c12", "#2ecc71"]):
+#     q1, q3 = df_feat[col].quantile(0.25), df_feat[col].quantile(0.75)
+#     iqr = q3 - q1
+#     trimmed = df_feat[(df_feat[col] >= q1 - 3*iqr) & (df_feat[col] <= q3 + 3*iqr)][col]
+#     ax.boxplot(trimmed, patch_artist=True,
+#                boxprops=dict(facecolor=clr, alpha=0.6),
+#                medianprops=dict(color="black", linewidth=2))
+#     ax.set_title(col, fontsize=11, fontweight="bold")
+#     ax.set_ylabel("Value")
+#     ax.grid(True, alpha=0.3)
+# plt.suptitle("Box Plots: Key Habitability Variables (IQR-trimmed)",
+#              fontsize=13, fontweight="bold")
+# plt.tight_layout()
+# plt.savefig("plot05_boxplots.png", dpi=150)
+# plt.show()
+# print("  -> Plot 5 saved: Box Plots")
 
-# Plot 6: Radius vs Temperature
-fig, ax = plt.subplots(figsize=(9, 6))
-sub = df_feat[(df_feat["pl_rade"] < 20) & (df_feat["pl_eqt"] < 3000)]
-sc = ax.scatter(sub["pl_rade"], sub["pl_eqt"],
-                c=np.log1p(sub["pl_insol"]), cmap="plasma", s=12, alpha=0.6)
-plt.colorbar(sc, ax=ax, label="log(Insolation + 1)")
-ax.axhline(288, color="blue", linestyle="--", linewidth=1.5, alpha=0.7, label="Earth Temp (288K)")
-ax.axvline(1.0, color="blue", linestyle="--", linewidth=1.5, alpha=0.7, label="Earth Radius (1.0)")
-ax.scatter([1.0], [288], color="cyan", s=200, marker="*",
-           edgecolors="blue", linewidth=2, label="Earth", zorder=10)
-for p in TARGET_PLANETS:
-    row = df_feat[df_feat["pl_name"] == p]
-    if not row.empty:
-        r, t = row["pl_rade"].values[0], row["pl_eqt"].values[0]
-        if r < 20 and t < 3000:
-            ax.scatter(r, t, color="red", s=60, zorder=11, marker="D")
+# # Plot 6: Radius vs Temperature
+# fig, ax = plt.subplots(figsize=(9, 6))
+# sub = df_feat[(df_feat["pl_rade"] < 20) & (df_feat["pl_eqt"] < 3000)]
+# sc = ax.scatter(sub["pl_rade"], sub["pl_eqt"],
+#                 c=np.log1p(sub["pl_insol"]), cmap="plasma", s=12, alpha=0.6)
+# plt.colorbar(sc, ax=ax, label="log(Insolation + 1)")
+# ax.axhline(288, color="blue", linestyle="--", linewidth=1.5, alpha=0.7, label="Earth Temp (288K)")
+# ax.axvline(1.0, color="blue", linestyle="--", linewidth=1.5, alpha=0.7, label="Earth Radius (1.0)")
+# ax.scatter([1.0], [288], color="cyan", s=200, marker="*",
+#            edgecolors="blue", linewidth=2, label="Earth", zorder=10)
+# for p in TARGET_PLANETS:
+#     row = df_feat[df_feat["pl_name"] == p]
+#     if not row.empty:
+#         r, t = row["pl_rade"].values[0], row["pl_eqt"].values[0]
+#         if r < 20 and t < 3000:
+#             ax.scatter(r, t, color="red", s=60, zorder=11, marker="D")
 
-            ax.text(r + 0.1, t + 10, p, fontsize=7, alpha=0.85)
-ax.set_xlabel("Planet Radius (Earth radii)", fontsize=11)
-ax.set_ylabel("Equilibrium Temperature (K)", fontsize=11)
-ax.set_title("Radius vs Temperature  (diamond = target planets)", fontsize=13, fontweight="bold")
-ax.legend()
-ax.grid(True, alpha=0.3)
-plt.tight_layout()
-plt.savefig("plot06_radius_vs_temp.png", dpi=150)
-plt.show()
-print("  -> Plot 6 saved: Radius vs Temperature")
+#             ax.text(r + 0.1, t + 10, p, fontsize=7, alpha=0.85)
+# ax.set_xlabel("Planet Radius (Earth radii)", fontsize=11)
+# ax.set_ylabel("Equilibrium Temperature (K)", fontsize=11)
+# ax.set_title("Radius vs Temperature  (diamond = target planets)", fontsize=13, fontweight="bold")
+# ax.legend()
+# ax.grid(True, alpha=0.3)
+# plt.tight_layout()
+# plt.savefig("plot06_radius_vs_temp.png", dpi=150)
+# plt.show()
+# print("  -> Plot 6 saved: Radius vs Temperature")
 
-# Plot 7: Discovery Method
-fig, ax = plt.subplots(figsize=(10, 5))
-disc = df[df["default_flag"] == 1]["discoverymethod"].value_counts()
-ax.bar(disc.index, disc.values,
-       color=sns.color_palette("tab10", len(disc)), edgecolor="black")
-ax.set_xlabel("Discovery Method", fontsize=11)
-ax.set_ylabel("Count", fontsize=11)
-ax.set_title("Exoplanets by Discovery Method", fontsize=13, fontweight="bold")
-ax.tick_params(axis="x", rotation=35)
-ax.grid(axis="y", alpha=0.3)
-plt.tight_layout()
-plt.savefig("plot07_discovery_method.png", dpi=150)
-plt.show()
-print("  -> Plot 7 saved: Discovery Method Distribution")
+# # Plot 7: Discovery Method
+# fig, ax = plt.subplots(figsize=(10, 5))
+# disc = df[df["default_flag"] == 1]["discoverymethod"].value_counts()
+# ax.bar(disc.index, disc.values,
+#        color=sns.color_palette("tab10", len(disc)), edgecolor="black")
+# ax.set_xlabel("Discovery Method", fontsize=11)
+# ax.set_ylabel("Count", fontsize=11)
+# ax.set_title("Exoplanets by Discovery Method", fontsize=13, fontweight="bold")
+# ax.tick_params(axis="x", rotation=35)
+# ax.grid(axis="y", alpha=0.3)
+# plt.tight_layout()
+# plt.savefig("plot07_discovery_method.png", dpi=150)
+# plt.show()
+# print("  -> Plot 7 saved: Discovery Method Distribution")
 
-# Plot 8: Discovery Year
-fig, ax = plt.subplots(figsize=(10, 4))
-year_data = df[df["default_flag"] == 1]["disc_year"].dropna()
-ax.hist(year_data, bins=range(int(year_data.min()), int(year_data.max()) + 2),
-        color="#8e44ad", edgecolor="white", linewidth=0.5)
-ax.set_xlabel("Discovery Year", fontsize=11)
-ax.set_ylabel("Number of Exoplanets", fontsize=11)
-ax.set_title("Exoplanet Discoveries by Year", fontsize=13, fontweight="bold")
-ax.grid(axis="y", alpha=0.3)
-plt.tight_layout()
-plt.savefig("plot08_discovery_year.png", dpi=150)
-plt.show()
-print("  -> Plot 8 saved: Discovery Year Histogram")
+# # Plot 8: Discovery Year
+# fig, ax = plt.subplots(figsize=(10, 4))
+# year_data = df[df["default_flag"] == 1]["disc_year"].dropna()
+# ax.hist(year_data, bins=range(int(year_data.min()), int(year_data.max()) + 2),
+#         color="#8e44ad", edgecolor="white", linewidth=0.5)
+# ax.set_xlabel("Discovery Year", fontsize=11)
+# ax.set_ylabel("Number of Exoplanets", fontsize=11)
+# ax.set_title("Exoplanet Discoveries by Year", fontsize=13, fontweight="bold")
+# ax.grid(axis="y", alpha=0.3)
+# plt.tight_layout()
+# plt.savefig("plot08_discovery_year.png", dpi=150)
+# plt.show()
+# print("  -> Plot 8 saved: Discovery Year Histogram")
 
-# ============================================================
-# SECTION 3: SCALING
-# ============================================================
-print("\n" + "=" * 70)
-print("SECTION 3: SCALING & PREPROCESSING")
-print("=" * 70)
+# # ============================================================
+# # SECTION 3: SCALING
+# # ============================================================
+# print("\n" + "=" * 70)
+# print("SECTION 3: SCALING & PREPROCESSING")
+# print("=" * 70)
 
-scaler = StandardScaler()
-X_scaled = scaler.fit_transform(df_feat[FEATURES])
-print(f"Scaled feature matrix shape: {X_scaled.shape}")
+# scaler = StandardScaler()
+# X_scaled = scaler.fit_transform(df_feat[FEATURES])
+# print(f"Scaled feature matrix shape: {X_scaled.shape}")
 
-# ============================================================
-# SECTION 4: K-MEANS CLUSTERING  (k = 5)
-# ============================================================
-print("\n" + "=" * 70)
-print("SECTION 4: K-MEANS CLUSTERING")
-print("=" * 70)
+# # ============================================================
+# # SECTION 4: K-MEANS CLUSTERING  (k = 5)
+# # ============================================================
+# print("\n" + "=" * 70)
+# print("SECTION 4: K-MEANS CLUSTERING")
+# print("=" * 70)
 
-from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_score
-from scipy import stats as scipy_stats
+# from sklearn.cluster import KMeans
+# from sklearn.metrics import silhouette_score
+# from scipy import stats as scipy_stats
 
-# ── Step 4a: Identify and set aside extreme outliers ──────────────────
-Z_THRESHOLD = 4.5
-z_abs = np.abs(scipy_stats.zscore(df_feat[FEATURES]))
-extreme_mask = (z_abs > Z_THRESHOLD).any(axis=1)
+# # ── Step 4a: Identify and set aside extreme outliers ──────────────────
+# Z_THRESHOLD = 4.5
+# z_abs = np.abs(scipy_stats.zscore(df_feat[FEATURES]))
+# extreme_mask = (z_abs > Z_THRESHOLD).any(axis=1)
 
-# Safety: never exclude target planets
-target_mask = df_feat["pl_name"].isin(TARGET_PLANETS)
-extreme_mask = extreme_mask & ~target_mask
+# # Safety: never exclude target planets
+# target_mask = df_feat["pl_name"].isin(TARGET_PLANETS)
+# extreme_mask = extreme_mask & ~target_mask
 
-n_extreme = extreme_mask.sum()
-print(f"Extreme outliers removed before clustering (|z|>{Z_THRESHOLD}): {n_extreme}")
-if n_extreme > 0:
-    print("  Extreme planets set aside:")
-    for name in df_feat[extreme_mask]["pl_name"].values:
-        print(f"    - {name}")
+# n_extreme = extreme_mask.sum()
+# print(f"Extreme outliers removed before clustering (|z|>{Z_THRESHOLD}): {n_extreme}")
+# if n_extreme > 0:
+#     print("  Extreme planets set aside:")
+#     for name in df_feat[extreme_mask]["pl_name"].values:
+#         print(f"    - {name}")
 
-df_cluster = df_feat[~extreme_mask].reset_index(drop=True)
-df_extreme  = df_feat[extreme_mask].reset_index(drop=True)
+# df_cluster = df_feat[~extreme_mask].reset_index(drop=True)
+# df_extreme  = df_feat[extreme_mask].reset_index(drop=True)
 
-X_cluster = scaler.transform(df_cluster[FEATURES])
+# X_cluster = scaler.transform(df_cluster[FEATURES])
 
-print(f"\nClustering on {len(df_cluster)} planets "
-      f"({len(df_extreme)} extreme outliers held out)")
+# print(f"\nClustering on {len(df_cluster)} planets "
+#       f"({len(df_extreme)} extreme outliers held out)")
 
-# ── Step 4b: Elbow + silhouette ───────────────────────────────────────
-K_FINAL = 5
-K_range = range(2, 11)
-inertia, silhouettes = [], []
+# # ── Step 4b: Elbow + silhouette ───────────────────────────────────────
+# K_FINAL = 5
+# K_range = range(2, 11)
+# inertia, silhouettes = [], []
 
-for k in K_range:
-    km_tmp  = KMeans(n_clusters=k, random_state=42, n_init=10)
-    lbl_tmp = km_tmp.fit_predict(X_cluster)
-    inertia.append(km_tmp.inertia_)
-    silhouettes.append(
-        silhouette_score(X_cluster, lbl_tmp, sample_size=2000, random_state=42)
-    )
+# for k in K_range:
+#     km_tmp  = KMeans(n_clusters=k, random_state=42, n_init=10)
+#     lbl_tmp = km_tmp.fit_predict(X_cluster)
+#     inertia.append(km_tmp.inertia_)
+#     silhouettes.append(
+#         silhouette_score(X_cluster, lbl_tmp, sample_size=2000, random_state=42)
+#     )
 
-print(f"\nK_FINAL = {K_FINAL}")
+# print(f"\nK_FINAL = {K_FINAL}")
 
-# ── Step 4c: Plot 9 ───────────────────────────────────────────────────
-fig, axes = plt.subplots(1, 2, figsize=(14, 5))
-k_list = list(K_range)
-axes[0].plot(k_list, inertia, marker='o', color="#e74c3c", linewidth=2)
-axes[0].axvline(K_FINAL, color="black", linestyle="--", linewidth=1.5,
-                label=f"Chosen k={K_FINAL}")
-axes[0].set_xlabel("k", fontsize=11)
-axes[0].set_ylabel("Inertia (WCSS)", fontsize=11)
-axes[0].set_title("Elbow Method for K-Means\n(extreme outliers removed)",
-                  fontsize=12, fontweight="bold")
-axes[0].legend(); axes[0].grid(True, alpha=0.4)
+# # ── Step 4c: Plot 9 ───────────────────────────────────────────────────
+# fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+# k_list = list(K_range)
+# axes[0].plot(k_list, inertia, marker='o', color="#e74c3c", linewidth=2)
+# axes[0].axvline(K_FINAL, color="black", linestyle="--", linewidth=1.5,
+#                 label=f"Chosen k={K_FINAL}")
+# axes[0].set_xlabel("k", fontsize=11)
+# axes[0].set_ylabel("Inertia (WCSS)", fontsize=11)
+# axes[0].set_title("Elbow Method for K-Means\n(extreme outliers removed)",
+#                   fontsize=12, fontweight="bold")
+# axes[0].legend(); axes[0].grid(True, alpha=0.4)
 
-axes[1].plot(k_list, silhouettes, marker='s', color="#2980b9", linewidth=2)
-axes[1].axvline(K_FINAL, color="black", linestyle="--", linewidth=1.5,
-                label=f"Chosen k={K_FINAL}")
-axes[1].set_xlabel("k", fontsize=11)
-axes[1].set_ylabel("Silhouette Score", fontsize=11)
-axes[1].set_title("Silhouette Score vs k\n(extreme outliers removed)",
-                  fontsize=12, fontweight="bold")
-axes[1].legend(); axes[1].grid(True, alpha=0.4)
+# axes[1].plot(k_list, silhouettes, marker='s', color="#2980b9", linewidth=2)
+# axes[1].axvline(K_FINAL, color="black", linestyle="--", linewidth=1.5,
+#                 label=f"Chosen k={K_FINAL}")
+# axes[1].set_xlabel("k", fontsize=11)
+# axes[1].set_ylabel("Silhouette Score", fontsize=11)
+# axes[1].set_title("Silhouette Score vs k\n(extreme outliers removed)",
+#                   fontsize=12, fontweight="bold")
+# axes[1].legend(); axes[1].grid(True, alpha=0.4)
 
-plt.suptitle(f"K-Means Cluster Selection — k={K_FINAL} chosen from elbow analysis",
-             fontsize=13, fontweight="bold")
-plt.tight_layout()
-plt.savefig("plot09_elbow_silhouette.png", dpi=150)
-plt.show()
-print(f"  -> Plot 9 saved: Elbow + Silhouette (k={K_FINAL})")
+# plt.suptitle(f"K-Means Cluster Selection — k={K_FINAL} chosen from elbow analysis",
+#              fontsize=13, fontweight="bold")
+# plt.tight_layout()
+# plt.savefig("plot09_elbow_silhouette.png", dpi=150)
+# plt.show()
+# print(f"  -> Plot 9 saved: Elbow + Silhouette (k={K_FINAL})")
 
-# ── Step 4d: Fit final KMeans on clean set ────────────────────────────
-kmeans = KMeans(n_clusters=K_FINAL, random_state=42, n_init=20)
-km_labels_clean = kmeans.fit_predict(X_cluster)
-df_cluster["km_cluster"] = km_labels_clean
+# # ── Step 4d: Fit final KMeans on clean set ────────────────────────────
+# kmeans = KMeans(n_clusters=K_FINAL, random_state=42, n_init=20)
+# km_labels_clean = kmeans.fit_predict(X_cluster)
+# df_cluster["km_cluster"] = km_labels_clean
 
-# ── Step 4e: Assign extreme outliers to nearest centroid ──────────────
-if len(df_extreme) > 0:
-    X_extreme = scaler.transform(df_extreme[FEATURES])
-    km_labels_extreme = kmeans.predict(X_extreme)
-    df_extreme = df_extreme.copy()
-    df_extreme["km_cluster"] = km_labels_extreme
+# # ── Step 4e: Assign extreme outliers to nearest centroid ──────────────
+# if len(df_extreme) > 0:
+#     X_extreme = scaler.transform(df_extreme[FEATURES])
+#     km_labels_extreme = kmeans.predict(X_extreme)
+#     df_extreme = df_extreme.copy()
+#     df_extreme["km_cluster"] = km_labels_extreme
 
-# ── Step 4f: Re-assemble ──────────────────────────────────────────────
-df_feat = pd.concat([df_cluster, df_extreme], ignore_index=True)
+# # ── Step 4f: Re-assemble ──────────────────────────────────────────────
+# df_feat = pd.concat([df_cluster, df_extreme], ignore_index=True)
 
-cluster_sizes = np.bincount(df_feat["km_cluster"])
-print(f"\nCluster sizes after fix: {dict(enumerate(cluster_sizes))}")
-print(f"Min cluster size: {cluster_sizes.min()}")
-assert cluster_sizes.min() >= 5, \
-    "Still degenerate clusters! Try increasing Z_THRESHOLD."
+# cluster_sizes = np.bincount(df_feat["km_cluster"])
+# print(f"\nCluster sizes after fix: {dict(enumerate(cluster_sizes))}")
+# print(f"Min cluster size: {cluster_sizes.min()}")
+# assert cluster_sizes.min() >= 5, \
+#     "Still degenerate clusters! Try increasing Z_THRESHOLD."
 
-km_stats = df_feat.groupby("km_cluster")[FEATURES].mean()
-print("\nK-Means Cluster Statistics (key features):")
-print(km_stats[["pl_rade", "pl_eqt", "pl_insol", "pl_bmasse", "st_teff"]].round(2).to_string())
+# km_stats = df_feat.groupby("km_cluster")[FEATURES].mean()
+# print("\nK-Means Cluster Statistics (key features):")
+# print(km_stats[["pl_rade", "pl_eqt", "pl_insol", "pl_bmasse", "st_teff"]].round(2).to_string())
 
-EARTH_RADIUS = 1.0
-EARTH_TEMP   = 288.0
-EARTH_INSOL  = 1.0
+# EARTH_RADIUS = 1.0
+# EARTH_TEMP   = 288.0
+# EARTH_INSOL  = 1.0
 
-target_cluster_votes = []
-for p in TARGET_PLANETS:
-    row = df_feat[df_feat["pl_name"] == p]
-    if not row.empty:
-        target_cluster_votes.append(int(row["km_cluster"].values[0]))
+# target_cluster_votes = []
+# for p in TARGET_PLANETS:
+#     row = df_feat[df_feat["pl_name"] == p]
+#     if not row.empty:
+#         target_cluster_votes.append(int(row["km_cluster"].values[0]))
 
-if target_cluster_votes:
-    vote_counts      = Counter(target_cluster_votes)
-    km_earth_cluster = vote_counts.most_common(1)[0][0]
-    print(f"\nTarget planet cluster vote counts: {dict(sorted(vote_counts.items()))}")
-else:
-    earth_dist_km    = km_stats.apply(
-        lambda row: abs(row["pl_rade"] - EARTH_RADIUS)
-                  + abs(row["pl_eqt"]  - EARTH_TEMP) / 100
-                  + abs(row["pl_insol"] - EARTH_INSOL), axis=1)
-    km_earth_cluster = int(earth_dist_km.idxmin())
+# if target_cluster_votes:
+#     vote_counts      = Counter(target_cluster_votes)
+#     km_earth_cluster = vote_counts.most_common(1)[0][0]
+#     print(f"\nTarget planet cluster vote counts: {dict(sorted(vote_counts.items()))}")
+# else:
+#     earth_dist_km    = km_stats.apply(
+#         lambda row: abs(row["pl_rade"] - EARTH_RADIUS)
+#                   + abs(row["pl_eqt"]  - EARTH_TEMP) / 100
+#                   + abs(row["pl_insol"] - EARTH_INSOL), axis=1)
+#     km_earth_cluster = int(earth_dist_km.idxmin())
 
-print(f"\nMost Earth-like K-Means cluster: {km_earth_cluster}")
-print(f"  Centroid: R={km_stats.loc[km_earth_cluster,'pl_rade']:.2f}  "
-      f"T={km_stats.loc[km_earth_cluster,'pl_eqt']:.1f}K")
+# print(f"\nMost Earth-like K-Means cluster: {km_earth_cluster}")
+# print(f"  Centroid: R={km_stats.loc[km_earth_cluster,'pl_rade']:.2f}  "
+#       f"T={km_stats.loc[km_earth_cluster,'pl_eqt']:.1f}K")
 
-print("\nTarget planet cluster assignments (K-Means):")
-for p in TARGET_PLANETS:
-    row = df_feat[df_feat["pl_name"] == p]
-    if not row.empty:
-        c    = int(row["km_cluster"].values[0])
-        r    = row["pl_rade"].values[0]
-        t    = row["pl_eqt"].values[0]
-        mark = "*" if c == km_earth_cluster else " "
-        print(f"  {mark} {p:25s}  cluster={c}  R={r:.2f}  T={t:.1f}K")
+# print("\nTarget planet cluster assignments (K-Means):")
+# for p in TARGET_PLANETS:
+#     row = df_feat[df_feat["pl_name"] == p]
+#     if not row.empty:
+#         c    = int(row["km_cluster"].values[0])
+#         r    = row["pl_rade"].values[0]
+#         t    = row["pl_eqt"].values[0]
+#         mark = "*" if c == km_earth_cluster else " "
+#         print(f"  {mark} {p:25s}  cluster={c}  R={r:.2f}  T={t:.1f}K")
 
-# Re-scale full df_feat for downstream
-X_scaled = scaler.transform(df_feat[FEATURES])
+# # Re-scale full df_feat for downstream
+# X_scaled = scaler.transform(df_feat[FEATURES])
 
-# ── Helper: discrete tab10 colormap ──────────────────────────────────
-def get_tab10_colors(n):
-    """Return n distinct colours from tab10, correctly indexed."""
-    cmap = plt.cm.get_cmap("tab10", n)
-    return [cmap(i) for i in range(n)]
+# # ── Helper: discrete tab10 colormap ──────────────────────────────────
+# def get_tab10_colors(n):
+#     """Return n distinct colours from tab10, correctly indexed."""
+#     cmap = plt.cm.get_cmap("tab10", n)
+#     return [cmap(i) for i in range(n)]
 
-tab10_colors = get_tab10_colors(K_FINAL)
+# tab10_colors = get_tab10_colors(K_FINAL)
 
-# Plot 10: K-Means Scatter (FIXED colormap)
-fig, ax = plt.subplots(figsize=(9, 6))
-plot_sub = df_feat[(df_feat["pl_rade"] < 20) & (df_feat["pl_eqt"] < 3000)]
-cmap_km  = plt.cm.get_cmap("tab10", K_FINAL)
-sc = ax.scatter(plot_sub["pl_rade"], plot_sub["pl_eqt"],
-                c=plot_sub["km_cluster"], cmap=cmap_km,
-                vmin=-0.5, vmax=K_FINAL - 0.5, s=14, alpha=0.6)
-ax.axhline(288, color="black", linestyle="--", linewidth=1.5, alpha=0.6, label="Earth Temp")
-ax.axvline(1.0, color="black", linestyle="--", linewidth=1.5, alpha=0.6, label="Earth Radius")
-ax.scatter([1.0], [288], color="cyan", s=300, marker="*",
-           edgecolors="navy", linewidth=2, label="Earth", zorder=10)
-for p in TARGET_PLANETS:
-    row = df_feat[df_feat["pl_name"] == p]
-    if not row.empty:
-        r, t = row["pl_rade"].values[0], row["pl_eqt"].values[0]
-        if r < 20 and t < 3000:
-            ax.scatter(r, t, color="red", s=80, zorder=12, marker="D", linewidths=1)
+# # Plot 10: K-Means Scatter (FIXED colormap)
+# fig, ax = plt.subplots(figsize=(9, 6))
+# plot_sub = df_feat[(df_feat["pl_rade"] < 20) & (df_feat["pl_eqt"] < 3000)]
+# cmap_km  = plt.cm.get_cmap("tab10", K_FINAL)
+# sc = ax.scatter(plot_sub["pl_rade"], plot_sub["pl_eqt"],
+#                 c=plot_sub["km_cluster"], cmap=cmap_km,
+#                 vmin=-0.5, vmax=K_FINAL - 0.5, s=14, alpha=0.6)
+# ax.axhline(288, color="black", linestyle="--", linewidth=1.5, alpha=0.6, label="Earth Temp")
+# ax.axvline(1.0, color="black", linestyle="--", linewidth=1.5, alpha=0.6, label="Earth Radius")
+# ax.scatter([1.0], [288], color="cyan", s=300, marker="*",
+#            edgecolors="navy", linewidth=2, label="Earth", zorder=10)
+# for p in TARGET_PLANETS:
+#     row = df_feat[df_feat["pl_name"] == p]
+#     if not row.empty:
+#         r, t = row["pl_rade"].values[0], row["pl_eqt"].values[0]
+#         if r < 20 and t < 3000:
+#             ax.scatter(r, t, color="red", s=80, zorder=12, marker="D", linewidths=1)
 
-            ax.text(r + 0.1, t + 10, p, fontsize=6.5, alpha=0.85)
-cbar = plt.colorbar(sc, ax=ax, ticks=range(K_FINAL))
-cbar.set_label("K-Means Cluster")
-ax.set_xlabel("Planet Radius (Earth radii)", fontsize=11)
-ax.set_ylabel("Equilibrium Temperature (K)", fontsize=11)
-ax.set_title(f"K-Means Clustering (k={K_FINAL}, 17 Features)  diamond=target planets",
-             fontsize=12, fontweight="bold")
-ax.legend(); ax.grid(True, alpha=0.3)
-plt.tight_layout()
-plt.savefig("plot10_kmeans_scatter.png", dpi=150)
-plt.show()
-print("  -> Plot 10 saved: K-Means Scatter")
+#             ax.text(r + 0.1, t + 10, p, fontsize=6.5, alpha=0.85)
+# cbar = plt.colorbar(sc, ax=ax, ticks=range(K_FINAL))
+# cbar.set_label("K-Means Cluster")
+# ax.set_xlabel("Planet Radius (Earth radii)", fontsize=11)
+# ax.set_ylabel("Equilibrium Temperature (K)", fontsize=11)
+# ax.set_title(f"K-Means Clustering (k={K_FINAL}, 17 Features)  diamond=target planets",
+#              fontsize=12, fontweight="bold")
+# ax.legend(); ax.grid(True, alpha=0.3)
+# plt.tight_layout()
+# plt.savefig("plot10_kmeans_scatter.png", dpi=150)
+# plt.show()
+# print("  -> Plot 10 saved: K-Means Scatter")
 
-# Plot 11: Cluster Sizes (FIXED colormap)
-fig, ax = plt.subplots(figsize=(8, 4))
-cluster_counts = df_feat["km_cluster"].value_counts().sort_index()
-ax.bar(cluster_counts.index, cluster_counts.values,
-       color=tab10_colors, edgecolor="black")
-ax.set_xlabel("Cluster ID", fontsize=11)
-ax.set_ylabel("Number of Planets", fontsize=11)
-ax.set_title(f"K-Means Cluster Sizes (k={K_FINAL})", fontsize=12, fontweight="bold")
-ax.grid(axis="y", alpha=0.3)
-for i, v in zip(cluster_counts.index, cluster_counts.values):
-    ax.text(i, v + 5, str(v), ha="center", fontsize=9)
-plt.tight_layout()
-plt.savefig("plot11_kmeans_cluster_sizes.png", dpi=150)
-plt.show()
-print("  -> Plot 11 saved: K-Means Cluster Sizes")
+# # Plot 11: Cluster Sizes (FIXED colormap)
+# fig, ax = plt.subplots(figsize=(8, 4))
+# cluster_counts = df_feat["km_cluster"].value_counts().sort_index()
+# ax.bar(cluster_counts.index, cluster_counts.values,
+#        color=tab10_colors, edgecolor="black")
+# ax.set_xlabel("Cluster ID", fontsize=11)
+# ax.set_ylabel("Number of Planets", fontsize=11)
+# ax.set_title(f"K-Means Cluster Sizes (k={K_FINAL})", fontsize=12, fontweight="bold")
+# ax.grid(axis="y", alpha=0.3)
+# for i, v in zip(cluster_counts.index, cluster_counts.values):
+#     ax.text(i, v + 5, str(v), ha="center", fontsize=9)
+# plt.tight_layout()
+# plt.savefig("plot11_kmeans_cluster_sizes.png", dpi=150)
+# plt.show()
+# print("  -> Plot 11 saved: K-Means Cluster Sizes")
 
-# Plot 12 (Improved): Cluster Summary Table (REPLACES HEATMAP)
+# # Plot 12 (Improved): Cluster Summary Table (REPLACES HEATMAP)
 
-cluster_table = df_feat.groupby("km_cluster")[FEATURES].mean().round(2)
+# cluster_table = df_feat.groupby("km_cluster")[FEATURES].mean().round(2)
 
-fig, ax = plt.subplots(figsize=(14, 6))
-ax.axis('off')
+# fig, ax = plt.subplots(figsize=(14, 6))
+# ax.axis('off')
 
-table = ax.table(
-    cellText=cluster_table.values,
-    colLabels=cluster_table.columns,
-    rowLabels=[f"Cluster {i}" for i in cluster_table.index],
-    loc='center'
-)
+# table = ax.table(
+#     cellText=cluster_table.values,
+#     colLabels=cluster_table.columns,
+#     rowLabels=[f"Cluster {i}" for i in cluster_table.index],
+#     loc='center'
+# )
 
-table.auto_set_font_size(False)
-table.set_fontsize(8)
-table.scale(1, 1.5)
+# table.auto_set_font_size(False)
+# table.set_fontsize(8)
+# table.scale(1, 1.5)
 
-plt.title(f"K-Means Cluster Summary (k={K_FINAL}) — Actual Feature Values",
-          fontsize=13, fontweight="bold")
+# plt.title(f"K-Means Cluster Summary (k={K_FINAL}) — Actual Feature Values",
+#           fontsize=13, fontweight="bold")
 
-plt.savefig("plot12_cluster_table.png", dpi=150)
-plt.show()
-print("  -> Plot 12 saved: Cluster Summary Table")
+# plt.savefig("plot12_cluster_table.png", dpi=150)
+# plt.show()
+# print("  -> Plot 12 saved: Cluster Summary Table")
 
 # ============================================================
 # SECTION 5: HIERARCHICAL (AGGLOMERATIVE) CLUSTERING — CORRECTED
@@ -600,75 +600,126 @@ small_clusters = {k: v for k, v in df_feat["agg_cluster"].value_counts().items()
 if small_clusters:
     print(f"NOTE: Small clusters: {small_clusters} (from extreme outliers)")
 
-# ── Step 5g: t-SNE on X_cluster (same embedding for both algorithms) ──
-print("\nGenerating t-SNE (this takes ~1-2 min)...")
-tsne = TSNE(n_components=2, perplexity=60, learning_rate=500,
-            n_iter=3000, random_state=42)
-X_tsne = tsne.fit_transform(X_cluster)   # shape: (4322, 2)
+# ── Step 5g: Improved t-SNE Visualization Pipeline ───────────────────
 
+print("\nGenerating Improved t-SNE (with scaling + PCA)...")
+
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE
+
+# ✅ Step 1: Scale data (CRITICAL)
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X_cluster)
+
+# ✅ Step 2: SAFE PCA
+from sklearn.decomposition import PCA
+
+pca = PCA(n_components=0.95, random_state=42)  
+X_pca = pca.fit_transform(X_scaled)
+
+# ✅ Step 3: Optimized t-SNE
+tsne = TSNE(
+    n_components=2,
+    perplexity=30,          # better than 60
+    learning_rate=200,      # more stable
+    max_iter=3000,
+    init='pca',             # improves layout
+    random_state=42
+)
+
+X_tsne = tsne.fit_transform(X_pca)
+
+# Color map
 cmap_use = plt.cm.get_cmap("tab10", K_FINAL)
 
-# ── t-SNE Plot A: K-Means labels ──────────────────────────────────────
+# ── Plot A: K-Means ────────────────────────────────────────────────
 fig, ax = plt.subplots(figsize=(9, 7))
+
 for cluster_id in range(K_FINAL):
     mask = km_labels_clean == cluster_id
-    ax.scatter(X_tsne[mask, 0], X_tsne[mask, 1],
-               color=cmap_use(cluster_id), s=20, alpha=0.85,
-               edgecolors="black", linewidths=0.2,
-               label=f"Cluster {cluster_id} (n={mask.sum()})")
+    ax.scatter(
+        X_tsne[mask, 0], X_tsne[mask, 1],
+        color=cmap_use(cluster_id),
+        s=18,
+        alpha=0.85,
+        edgecolors="none",
+        label=f"Cluster {cluster_id} (n={mask.sum()})"
+    )
+
 ax.legend(title="K-Means Clusters", fontsize=9)
-ax.set_title(f"K-Means Clusters (k={K_FINAL}) — t-SNE Visualization",
-             fontsize=13, fontweight="bold")
+ax.set_title(f"K-Means (k={K_FINAL}) — t-SNE (Improved)", fontweight="bold")
 ax.set_xlabel("t-SNE Component 1")
 ax.set_ylabel("t-SNE Component 2")
 ax.grid(True, alpha=0.3)
-plt.tight_layout()
-plt.savefig("plotXX_tsne_kmeans.png", dpi=150)
-plt.show()
-print("  -> t-SNE K-Means plot saved")
 
-# ── t-SNE Plot B: Agglomerative labels ────────────────────────────────
+plt.tight_layout()
+plt.savefig("plot_tsne_kmeans_improved.png", dpi=150)
+plt.show()
+
+print("  -> Improved t-SNE K-Means plot saved")
+
+
+# ── Plot B: Agglomerative ──────────────────────────────────────────
 fig, ax = plt.subplots(figsize=(9, 7))
+
 for cluster_id in range(K_FINAL):
     mask = agg_labels_clean == cluster_id
-    ax.scatter(X_tsne[mask, 0], X_tsne[mask, 1],
-               color=cmap_use(cluster_id), s=20, alpha=0.85,
-               edgecolors="black", linewidths=0.2,
-               label=f"Cluster {cluster_id} (n={mask.sum()})")
+    ax.scatter(
+        X_tsne[mask, 0], X_tsne[mask, 1],
+        color=cmap_use(cluster_id),
+        s=18,
+        alpha=0.85,
+        edgecolors="none",
+        label=f"Cluster {cluster_id} (n={mask.sum()})"
+    )
+
 ax.legend(title="Agglomerative Clusters", fontsize=9)
-ax.set_title(f"Agglomerative Clusters (k={K_FINAL}, PCA+Ward) — t-SNE Visualization",
-             fontsize=13, fontweight="bold")
+ax.set_title(f"Agglomerative (k={K_FINAL}, PCA+Ward) — t-SNE (Improved)", fontweight="bold")
 ax.set_xlabel("t-SNE Component 1")
 ax.set_ylabel("t-SNE Component 2")
 ax.grid(True, alpha=0.3)
-plt.tight_layout()
-plt.savefig("plotXX_tsne_agg.png", dpi=150)
-plt.show()
-print("  -> t-SNE Agglomerative plot saved")
 
-# ── t-SNE Plot C: Side-by-side comparison ─────────────────────────────
+plt.tight_layout()
+plt.savefig("plot_tsne_agg_improved.png", dpi=150)
+plt.show()
+
+print("  -> Improved t-SNE Agglomerative plot saved")
+
+
+# ── Plot C: Side-by-side Comparison ────────────────────────────────
 fig, axes = plt.subplots(1, 2, figsize=(18, 7))
+
 for ax, labels, title in [
     (axes[0], km_labels_clean,  f"K-Means (k={K_FINAL})"),
     (axes[1], agg_labels_clean, f"Agglomerative PCA+Ward (k={K_FINAL})")
 ]:
     for cluster_id in range(K_FINAL):
         mask = labels == cluster_id
-        ax.scatter(X_tsne[mask, 0], X_tsne[mask, 1],
-                   color=cmap_use(cluster_id), s=15, alpha=0.80,
-                   edgecolors="black", linewidths=0.15,
-                   label=f"Cluster {cluster_id} (n={mask.sum()})")
-    ax.legend(title="Clusters", fontsize=8, loc="upper right")
-    ax.set_title(title, fontsize=12, fontweight="bold")
+        ax.scatter(
+            X_tsne[mask, 0], X_tsne[mask, 1],
+            color=cmap_use(cluster_id),
+            s=15,
+            alpha=0.80,
+            edgecolors="none"
+        )
+
+    ax.set_title(title, fontweight="bold")
     ax.set_xlabel("t-SNE Component 1")
     ax.set_ylabel("t-SNE Component 2")
     ax.grid(True, alpha=0.3)
-plt.suptitle("t-SNE: K-Means vs Agglomerative Clustering — Same Embedding, Different Labels",
-             fontsize=13, fontweight="bold")
+
+plt.suptitle(
+    "t-SNE Comparison (Improved): K-Means vs Agglomerative",
+    fontweight="bold"
+)
+
 plt.tight_layout()
-plt.savefig("plotXX_tsne_comparison.png", dpi=150)
+plt.savefig("plot_tsne_comparison_improved.png", dpi=150)
 plt.show()
-print("  -> t-SNE side-by-side comparison saved")
+
+print("  -> Improved t-SNE comparison plot saved")
 
 # ── PCA Visualization (2D for display, different from PCA-10 used for clustering) ──
 pca_viz = PCA(n_components=2, random_state=42)
