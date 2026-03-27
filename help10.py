@@ -673,7 +673,7 @@ print("=" * 70)
 
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.decomposition import PCA
-from sklearn.manifold import TSNE
+
 from scipy.cluster.hierarchy import dendrogram, linkage
 
 # ── Step 5a: Reduce to PCA (10 components) before clustering ─────────
@@ -764,75 +764,7 @@ small_clusters = {k: v for k, v in df_feat["agg_cluster"].value_counts().items()
 if small_clusters:
     print(f"NOTE: Small clusters: {small_clusters} (from extreme outliers)")
 
-# ── Step 5g: t-SNE on X_cluster (same embedding for both algorithms) ──
-print("\nGenerating t-SNE (this takes ~1-2 min)...")
-tsne = TSNE(n_components=2, perplexity=60, learning_rate=500,
-            n_iter=3000, random_state=42)
-X_tsne = tsne.fit_transform(X_cluster)   # shape: (4322, 2)
 
-cmap_use = plt.cm.get_cmap("tab10", K_FINAL)
-
-# ── t-SNE Plot A: K-Means labels ──────────────────────────────────────
-fig, ax = plt.subplots(figsize=(9, 7))
-for cluster_id in range(K_FINAL):
-    mask = km_labels_clean == cluster_id
-    ax.scatter(X_tsne[mask, 0], X_tsne[mask, 1],
-               color=cmap_use(cluster_id), s=20, alpha=0.85,
-               edgecolors="black", linewidths=0.2,
-               label=f"Cluster {cluster_id} (n={mask.sum()})")
-ax.legend(title="K-Means Clusters", fontsize=9)
-ax.set_title(f"K-Means Clusters (k={K_FINAL}) — t-SNE Visualization",
-             fontsize=13, fontweight="bold")
-ax.set_xlabel("t-SNE Component 1")
-ax.set_ylabel("t-SNE Component 2")
-ax.grid(True, alpha=0.3)
-plt.tight_layout()
-plt.savefig("plotXX_tsne_kmeans.png", dpi=150)
-plt.show()
-print("  -> t-SNE K-Means plot saved")
-
-# ── t-SNE Plot B: Agglomerative labels ────────────────────────────────
-fig, ax = plt.subplots(figsize=(9, 7))
-for cluster_id in range(K_FINAL):
-    mask = agg_labels_clean == cluster_id
-    ax.scatter(X_tsne[mask, 0], X_tsne[mask, 1],
-               color=cmap_use(cluster_id), s=20, alpha=0.85,
-               edgecolors="black", linewidths=0.2,
-               label=f"Cluster {cluster_id} (n={mask.sum()})")
-ax.legend(title="Agglomerative Clusters", fontsize=9)
-ax.set_title(f"Agglomerative Clusters (k={K_FINAL}, PCA+Ward) — t-SNE Visualization",
-             fontsize=13, fontweight="bold")
-ax.set_xlabel("t-SNE Component 1")
-ax.set_ylabel("t-SNE Component 2")
-ax.grid(True, alpha=0.3)
-plt.tight_layout()
-plt.savefig("plotXX_tsne_agg.png", dpi=150)
-plt.show()
-print("  -> t-SNE Agglomerative plot saved")
-
-# ── t-SNE Plot C: Side-by-side comparison ─────────────────────────────
-fig, axes = plt.subplots(1, 2, figsize=(18, 7))
-for ax, labels, title in [
-    (axes[0], km_labels_clean,  f"K-Means (k={K_FINAL})"),
-    (axes[1], agg_labels_clean, f"Agglomerative PCA+Ward (k={K_FINAL})")
-]:
-    for cluster_id in range(K_FINAL):
-        mask = labels == cluster_id
-        ax.scatter(X_tsne[mask, 0], X_tsne[mask, 1],
-                   color=cmap_use(cluster_id), s=15, alpha=0.80,
-                   edgecolors="black", linewidths=0.15,
-                   label=f"Cluster {cluster_id} (n={mask.sum()})")
-    ax.legend(title="Clusters", fontsize=8, loc="upper right")
-    ax.set_title(title, fontsize=12, fontweight="bold")
-    ax.set_xlabel("t-SNE Component 1")
-    ax.set_ylabel("t-SNE Component 2")
-    ax.grid(True, alpha=0.3)
-plt.suptitle("t-SNE: K-Means vs Agglomerative Clustering — Same Embedding, Different Labels",
-             fontsize=13, fontweight="bold")
-plt.tight_layout()
-plt.savefig("plotXX_tsne_comparison.png", dpi=150)
-plt.show()
-print("  -> t-SNE side-by-side comparison saved")
 
 # ── PCA Visualization (2D for display, different from PCA-10 used for clustering) ──
 pca_viz = PCA(n_components=2, random_state=42)
@@ -844,7 +776,7 @@ for ax, col, title in [
     (axes[1], "agg_cluster", f"Agglomerative PCA+Ward (k={K_FINAL})")
 ]:
     sc = ax.scatter(X_pca[:, 0], X_pca[:, 1],
-                    c=df_feat[col], cmap=cmap_use,
+                    c=df_feat[col], cmap=plt.cm.get_cmap("tab10", K_FINAL),
                     vmin=-0.5, vmax=K_FINAL - 0.5,
                     s=15, alpha=0.7)
     cbar = plt.colorbar(sc, ax=ax, ticks=range(K_FINAL))
@@ -864,7 +796,7 @@ print("  -> PCA comparison plot saved")
 fig, ax = plt.subplots(figsize=(9, 6))
 plot_sub2 = df_feat[(df_feat["pl_rade"] < 20) & (df_feat["pl_eqt"] < 3000)]
 sc2 = ax.scatter(plot_sub2["pl_rade"], plot_sub2["pl_eqt"],
-                 c=plot_sub2["agg_cluster"], cmap=cmap_use,
+                 c=plot_sub2["agg_cluster"], cmap=plt.cm.get_cmap("tab10", K_FINAL),
                  vmin=-0.5, vmax=K_FINAL - 0.5, s=14, alpha=0.7)
 ax.axhline(288, color="black", linestyle="--", linewidth=1.5, alpha=0.6)
 ax.axvline(1.0, color="black", linestyle="--", linewidth=1.5, alpha=0.6)
@@ -898,7 +830,7 @@ for ax, col, title in [
 ]:
     pls = df_feat[(df_feat["pl_rade"] < 20) & (df_feat["pl_eqt"] < 3000)]
     sc  = ax.scatter(pls["pl_rade"], pls["pl_eqt"],
-                     c=pls[col], cmap=cmap_use,
+                     c=pls[col], cmap=plt.cm.get_cmap("tab10", K_FINAL),
                      vmin=-0.5, vmax=K_FINAL - 0.5, s=12, alpha=0.65)
     ax.axhline(288, color="black", linestyle="--", linewidth=1.2, alpha=0.5)
     ax.axvline(1.0, color="black", linestyle="--", linewidth=1.2, alpha=0.5)
