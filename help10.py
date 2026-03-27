@@ -312,6 +312,87 @@ plt.savefig("plot06_radius_vs_temp.png", dpi=150)
 plt.show()
 print("  -> Plot 6 saved: Radius vs Temperature")
 
+# ============================================================
+# Plot 6B: Radius vs Insolation (NEW - IMPORTANT)
+# ============================================================
+
+fig, ax = plt.subplots(figsize=(9, 6))
+
+sub = df_feat[(df_feat["pl_rade"] < 20)]
+
+sc = ax.scatter(
+    sub["pl_rade"],
+    sub["pl_insol"],
+    c=sub["pl_eqt"],
+    cmap="coolwarm",
+    s=12,
+    alpha=0.6
+)
+
+plt.colorbar(sc, ax=ax, label="Temperature (K)")
+
+ax.axhline(1.0, color="blue", linestyle="--", linewidth=1.5, label="Earth Insolation")
+ax.axvline(1.0, color="blue", linestyle="--", linewidth=1.5, label="Earth Radius")
+
+ax.scatter([1.0], [1.0], color="cyan", s=200, marker="*",
+           edgecolors="blue", linewidth=2, label="Earth")
+
+ax.set_xlabel("Planet Radius (Earth radii)", fontsize=11)
+ax.set_ylabel("Insolation (Earth flux)", fontsize=11)
+
+ax.set_title("Radius vs Insolation (color = Temperature)",
+             fontsize=13, fontweight="bold")
+
+ax.legend()
+ax.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.savefig("plot06B_radius_vs_insolation.png", dpi=150)
+plt.show()
+
+print("  -> Plot 6B saved: Radius vs Insolation")
+
+
+# ============================================================
+# Plot 6C: Temperature vs Insolation (NEW - RELATION CHECK)
+# ============================================================
+
+fig, ax = plt.subplots(figsize=(9, 6))
+
+sub = df_feat[(df_feat["pl_eqt"] < 3000)]
+
+sc = ax.scatter(
+    sub["pl_insol"],
+    sub["pl_eqt"],
+    c=sub["pl_rade"],
+    cmap="viridis",
+    s=12,
+    alpha=0.6
+)
+
+plt.colorbar(sc, ax=ax, label="Planet Radius")
+
+ax.axhline(288, color="blue", linestyle="--", linewidth=1.5, label="Earth Temp")
+ax.axvline(1.0, color="blue", linestyle="--", linewidth=1.5, label="Earth Insolation")
+
+ax.scatter([1.0], [288], color="cyan", s=200, marker="*",
+           edgecolors="blue", linewidth=2, label="Earth")
+
+ax.set_xlabel("Insolation (Earth flux)", fontsize=11)
+ax.set_ylabel("Equilibrium Temperature (K)", fontsize=11)
+
+ax.set_title("Temperature vs Insolation (color = Radius)",
+             fontsize=13, fontweight="bold")
+
+ax.legend()
+ax.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.savefig("plot06C_temp_vs_insolation.png", dpi=150)
+plt.show()
+
+print("  -> Plot 6C saved: Temperature vs Insolation")
+
 # Plot 7: Discovery Method
 fig, ax = plt.subplots(figsize=(10, 5))
 disc = df[df["default_flag"] == 1]["discoverymethod"].value_counts()
@@ -505,26 +586,36 @@ tab10_colors = get_tab10_colors(K_FINAL)
 
 # Plot 10: K-Means Scatter (FIXED colormap)
 fig, ax = plt.subplots(figsize=(9, 6))
-plot_sub = df_feat[(df_feat["pl_rade"] < 20) & (df_feat["pl_eqt"] < 3000)]
+plot_sub = df_feat[(df_feat["pl_rade"] < 20) & (df_feat["pl_eqt"] < 3000)].copy()
+
+# 🔥 ADD THIS (IMPORTANT)
+plot_sub["log_rade"] = np.log1p(plot_sub["pl_rade"])
+plot_sub["log_eqt"] = np.log1p(plot_sub["pl_eqt"])
 cmap_km  = plt.cm.get_cmap("tab10", K_FINAL)
-sc = ax.scatter(plot_sub["pl_rade"], plot_sub["pl_eqt"],
+sc = ax.scatter(plot_sub["log_rade"], plot_sub["log_eqt"],
                 c=plot_sub["km_cluster"], cmap=cmap_km,
-                vmin=-0.5, vmax=K_FINAL - 0.5, s=14, alpha=0.6)
-ax.axhline(288, color="black", linestyle="--", linewidth=1.5, alpha=0.6, label="Earth Temp")
-ax.axvline(1.0, color="black", linestyle="--", linewidth=1.5, alpha=0.6, label="Earth Radius")
-ax.scatter([1.0], [288], color="cyan", s=300, marker="*",
-           edgecolors="navy", linewidth=2, label="Earth", zorder=10)
+                vmin=-0.5, vmax=K_FINAL - 0.5,
+                s=18, alpha=0.8,
+                edgecolors="black", linewidths=0.2)
+ax.axhline(np.log1p(288), color="black", linestyle="--", linewidth=1.5, alpha=0.6, label="Earth Temp")
+ax.axvline(np.log1p(1.0), color="black", linestyle="--", linewidth=1.5, alpha=0.6, label="Earth Radius")
+ax.scatter([np.log1p(1.0)], [np.log1p(288)],
+           color="cyan", s=300, marker="*",
+           edgecolors="navy", linewidth=2,
+           label="Earth", zorder=10)
 for p in TARGET_PLANETS:
     row = df_feat[df_feat["pl_name"] == p]
     if not row.empty:
         r, t = row["pl_rade"].values[0], row["pl_eqt"].values[0]
         if r < 20 and t < 3000:
-            ax.scatter(r, t, color="red", s=80, zorder=12, marker="D", linewidths=1)
-            ax.text(r + 0.1, t + 10, p, fontsize=6.5, alpha=0.85)
+            ax.scatter(np.log1p(r), np.log1p(t),
+           color="red", s=120, zorder=12,
+           marker="D", edgecolors="black", linewidths=1.2)
+            ax.text(np.log1p(r), np.log1p(t), p, fontsize=6.5, alpha=0.85)
 cbar = plt.colorbar(sc, ax=ax, ticks=range(K_FINAL))
 cbar.set_label("K-Means Cluster")
-ax.set_xlabel("Planet Radius (Earth radii)", fontsize=11)
-ax.set_ylabel("Equilibrium Temperature (K)", fontsize=11)
+ax.set_xlabel("log(Planet Radius)", fontsize=11)
+ax.set_ylabel("log(Temperature)", fontsize=11)
 ax.set_title(f"K-Means Clustering (k={K_FINAL}, 17 Features)  diamond=target planets",
              fontsize=12, fontweight="bold")
 ax.legend(); ax.grid(True, alpha=0.3)
@@ -780,8 +871,10 @@ sc2 = ax.scatter(plot_sub2["pl_rade"], plot_sub2["pl_eqt"],
                  vmin=-0.5, vmax=K_FINAL - 0.5, s=14, alpha=0.7)
 ax.axhline(288, color="black", linestyle="--", linewidth=1.5, alpha=0.6)
 ax.axvline(1.0, color="black", linestyle="--", linewidth=1.5, alpha=0.6)
-ax.scatter([1.0], [288], color="cyan", s=300, marker="*",
-           edgecolors="navy", linewidth=2, label="Earth", zorder=10)
+ax.scatter([np.log1p(1.0)], [np.log1p(288)],
+           color="cyan", s=300, marker="*",
+           edgecolors="navy", linewidth=2,
+           label="Earth", zorder=10)
 for p in TARGET_PLANETS:
     row = df_feat[df_feat["pl_name"] == p]
     if not row.empty:
