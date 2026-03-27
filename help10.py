@@ -50,6 +50,12 @@ df.columns = df.columns.str.strip()
 print(f"Raw dataset shape: {df.shape}")
 
 df = df[df["default_flag"] == 1].reset_index(drop=True)
+# ALL NUMERICAL FEATURES (for Plot 1 & 3)
+ALL_FEATURES = df.select_dtypes(include=[np.number]).columns.tolist()
+
+# Remove non-useful columns if present
+REMOVE_COLS = ["default_flag", "disc_year"]
+ALL_FEATURES = [c for c in ALL_FEATURES if c not in REMOVE_COLS]
 print(f"After default_flag filter: {df.shape}")
 
 FEATURES = [
@@ -110,7 +116,36 @@ if missing_targets:
 
 print("\nDescriptive Statistics:")
 print(df_feat[FEATURES].describe().round(3).to_string())
+# Plot 3: Correlation Heatmap
+# Select features with <= 50% missing
+valid_feats = [c for c in ALL_FEATURES if df[c].isnull().mean() < 0.5]
 
+# Fill temporarily for correlation
+df_corr = df[valid_feats].copy()
+df_corr = df_corr.fillna(df_corr.median(numeric_only=True))
+
+# Compute correlation
+corr_full = df_corr.corr().abs()
+
+# Select top 40 features
+top_features = corr_full.sum().sort_values(ascending=False).head(40).index.tolist()
+
+# Final correlation
+corr = df_corr[top_features].corr()
+
+fig, ax = plt.subplots(figsize=(14, 11))
+mask = np.triu(np.ones_like(corr, dtype=bool))
+
+sns.heatmap(corr, mask=mask, annot=False, cmap="coolwarm",
+            linewidths=0.5, ax=ax, vmin=-1, vmax=1, center=0)
+
+ax.set_title("Feature Correlation Heatmap (Top 40 Features)",
+             fontsize=13, fontweight="bold")
+
+plt.tight_layout()
+plt.savefig("plot03_correlation_heatmap.png", dpi=150)
+plt.show()
+print("  -> Plot 1 saved: Correlation Heatmap")
 # ============================================================
 # SECTION 2: EXPLORATORY DATA VISUALIZATION
 # ============================================================
@@ -119,26 +154,50 @@ print("SECTION 2: EXPLORATORY DATA VISUALIZATION")
 print("=" * 70)
 
 # Plot 1: Missing Value Bar Chart
-fig, ax = plt.subplots(figsize=(14, 4))
-miss_pct = (df[FEATURES].isnull().mean() * 100).sort_values(ascending=False)
+fig, ax = plt.subplots(figsize=(18, 6))  # wider
+
+miss_pct = (df[ALL_FEATURES].isnull().mean() * 100).sort_values(ascending=False)
 colors = ["#e74c3c" if v > 50 else "#f39c12" if v > 20 else "#2ecc71" for v in miss_pct]
-ax.bar(miss_pct.index, miss_pct.values, color=colors, edgecolor="black", linewidth=0.7)
+
+ax.bar(range(len(miss_pct)), miss_pct.values,
+       color=colors, edgecolor="black", linewidth=0.7)
+
+# ✅ SHOW LIMITED LABELS (fix overlap)
+step = max(1, len(miss_pct)//25)
+ax.set_xticks(range(0, len(miss_pct), step))
+ax.set_xticklabels(miss_pct.index[::step], rotation=45, ha="right")
+
 ax.set_xlabel("Feature", fontsize=11)
 ax.set_ylabel("Missing (%)", fontsize=11)
-ax.set_title("Missing Value Percentage per Feature (Full Dataset)", fontsize=13, fontweight="bold")
-ax.tick_params(axis="x", rotation=45)
+ax.set_title("Missing Value Percentage per Feature (Full Dataset)",
+             fontsize=13, fontweight="bold")
+
 ax.axhline(50, color="red", linestyle="--", linewidth=1.2, label="50% threshold")
 ax.legend()
+
 plt.tight_layout()
 plt.savefig("plot01_missing_values.png", dpi=150)
 plt.show()
-print("  -> Plot 1 saved: Missing Value Bar Chart")
+print("  -> Plot 2 saved: Missing Value Bar Chart")
 
 # Plot 2: Feature Distributions
 fig, axes = plt.subplots(4, 5, figsize=(20, 14))
 axes = axes.flatten()
 for i, col in enumerate(FEATURES):
-    axes[i].hist(df_feat[col], bins=40, color="#3498db", edgecolor="white", linewidth=0.4)
+    data = df_feat[col]
+
+    # ✅ remove extreme outliers (visual only)
+    q1, q99 = data.quantile(0.01), data.quantile(0.99)
+    data = data[(data >= q1) & (data <= q99)]
+
+    # ✅ log transform if highly skewed
+    if data.max() / (data.median() + 1e-9) > 50:
+        data = np.log1p(data)
+
+    axes[i].hist(data, bins=40, color="#3498db",edgecolor="white", linewidth=0.4)
+
+    axes[i].grid(alpha=0.2)
+    
     axes[i].set_title(col, fontsize=9, fontweight="bold")
     axes[i].set_xlabel("Value", fontsize=7)
     axes[i].set_ylabel("Count", fontsize=7)
@@ -150,61 +209,80 @@ plt.suptitle("Distribution of All 17 Features (after imputation)", fontsize=14,
 plt.tight_layout()
 plt.savefig("plot02_feature_distributions.png", dpi=150, bbox_inches="tight")
 plt.show()
-print("  -> Plot 2 saved: Feature Distributions")
+print("  -> Plot 3 saved: Feature Distributions")
 
-# Plot 3: Correlation Heatmap
-fig, ax = plt.subplots(figsize=(13, 10))
-corr = df_feat[FEATURES].corr()
-mask = np.triu(np.ones_like(corr, dtype=bool))
-sns.heatmap(corr, mask=mask, annot=True, fmt=".2f", cmap="coolwarm",
-            linewidths=0.5, ax=ax, annot_kws={"size": 7}, vmin=-1, vmax=1, center=0)
-ax.set_title("Feature Correlation Heatmap (17 Features)", fontsize=13, fontweight="bold")
-plt.tight_layout()
-plt.savefig("plot03_correlation_heatmap.png", dpi=150)
-plt.show()
-print("  -> Plot 3 saved: Correlation Heatmap")
 
-# Plot 4 (Improved): Correlation Matrix (Core Features)
+
 core5 = ["pl_rade", "pl_eqt", "pl_insol", "pl_bmasse", "st_teff"]
+pair_df = df_feat[core5].copy()
 
-fig, ax = plt.subplots(figsize=(10, 8))
-corr = df_feat[core5].corr()
+# 🔥 STEP 1: Remove extreme outliers (important)
+for col in core5:
+    q1, q99 = pair_df[col].quantile(0.01), pair_df[col].quantile(0.99)
+    pair_df = pair_df[(pair_df[col] >= q1) & (pair_df[col] <= q99)]
 
-sns.heatmap(
-    corr,
-    annot=True,
-    fmt=".2f",
-    cmap="coolwarm",
-    linewidths=0.5,
-    cbar_kws={"label": "Correlation"},
-    ax=ax
+# 🔥 STEP 2: Log transform skewed features (MAIN FIX)
+for col in ["pl_insol", "pl_bmasse", "pl_eqt"]:
+    pair_df[col] = np.log1p(pair_df[col])
+
+# 🔥 STEP 3: Sample for clarity
+pair_df = pair_df.sample(min(1200, len(pair_df)), random_state=42)
+
+# 🔥 STEP 4: Better pairplot
+g = sns.pairplot(
+    pair_df,
+    diag_kind="hist",
+    corner=True,
+    plot_kws={"alpha": 0.6, "s": 18}
 )
 
-ax.set_title("Correlation Matrix (Core Habitability Features)",
-             fontsize=13, fontweight="bold")
+# ✅ FORCE LABELS TO SHOW (FIX)
+for ax in g.axes.flatten():
+    if ax is not None:
+        ax.set_xlabel(ax.get_xlabel(), fontsize=9)
+        ax.set_ylabel(ax.get_ylabel(), fontsize=9)
 
-plt.tight_layout()
-plt.savefig("plot04_corr_core5.png", dpi=150)
+g.fig.suptitle("Pairplot: Core Features (Log-Scaled & Cleaned)",
+               y=1.02, fontsize=14, fontweight="bold")
+
+plt.savefig("plot04_pairplot_core5.png", dpi=150, bbox_inches="tight")
 plt.show()
+print("  -> Plot 4 saved: Pairplot (core 5 features)")
 
 # Plot 5: Box Plots
-fig, axes = plt.subplots(1, 3, figsize=(16, 5))
-for ax, col, clr in zip(axes,
-                         ["pl_rade", "pl_eqt", "pl_insol"],
-                         ["#e74c3c", "#f39c12", "#2ecc71"]):
+cols = FEATURES   # ✅ uses all 17 features automatically
+
+rows = 4
+cols_count = int(np.ceil(len(cols) / rows))
+
+fig, axes = plt.subplots(rows, cols_count, figsize=(4*cols_count, 4*rows))
+axes = axes.flatten()
+
+colors = ["#e74c3c", "#f39c12", "#2ecc71", "#3498db", "#9b59b6"]
+
+for i, col in enumerate(cols):
+    ax = axes[i]
+    clr = colors[i % len(colors)]
+
     q1, q3 = df_feat[col].quantile(0.25), df_feat[col].quantile(0.75)
     iqr = q3 - q1
     trimmed = df_feat[(df_feat[col] >= q1 - 3*iqr) & (df_feat[col] <= q3 + 3*iqr)][col]
-    ax.boxplot(trimmed, patch_artist=True,
-               boxprops=dict(facecolor=clr, alpha=0.6),
-               medianprops=dict(color="black", linewidth=2))
-    ax.set_title(col, fontsize=11, fontweight="bold")
-    ax.set_ylabel("Value")
-    ax.grid(True, alpha=0.3)
-plt.suptitle("Box Plots: Key Habitability Variables (IQR-trimmed)",
+
+    ax.boxplot(
+        trimmed,
+        patch_artist=True,
+        showfliers=False,  # 🔥 MAIN FIX
+        boxprops=dict(facecolor=clr, alpha=0.6),
+        medianprops=dict(color="black", linewidth=2)
+    )
+    ax.set_title(col, fontsize=9, fontweight="bold")
+    ax.tick_params(axis='both', labelsize=7)
+plt.suptitle(f"Box Plots: {len(cols)} Habitability Features (IQR-trimmed)",
              fontsize=13, fontweight="bold")
 plt.tight_layout()
 plt.savefig("plot05_boxplots.png", dpi=150)
+for j in range(len(cols), len(axes)):
+    axes[j].set_visible(False)
 plt.show()
 print("  -> Plot 5 saved: Box Plots")
 
@@ -224,8 +302,6 @@ for p in TARGET_PLANETS:
         r, t = row["pl_rade"].values[0], row["pl_eqt"].values[0]
         if r < 20 and t < 3000:
             ax.scatter(r, t, color="red", s=60, zorder=11, marker="D")
-
-            ax.text(r + 0.1, t + 10, p, fontsize=7, alpha=0.85)
 ax.set_xlabel("Planet Radius (Earth radii)", fontsize=11)
 ax.set_ylabel("Equilibrium Temperature (K)", fontsize=11)
 ax.set_title("Radius vs Temperature  (diamond = target planets)", fontsize=13, fontweight="bold")
@@ -401,6 +477,8 @@ else:
     km_earth_cluster = int(earth_dist_km.idxmin())
 
 print(f"\nMost Earth-like K-Means cluster: {km_earth_cluster}")
+print("\nInterpretation:")
+print(f"Cluster {km_earth_cluster} represents Earth-like planets (based on radius, temperature, insolation)")
 print(f"  Centroid: R={km_stats.loc[km_earth_cluster,'pl_rade']:.2f}  "
       f"T={km_stats.loc[km_earth_cluster,'pl_eqt']:.1f}K")
 
@@ -442,7 +520,6 @@ for p in TARGET_PLANETS:
         r, t = row["pl_rade"].values[0], row["pl_eqt"].values[0]
         if r < 20 and t < 3000:
             ax.scatter(r, t, color="red", s=80, zorder=12, marker="D", linewidths=1)
-
             ax.text(r + 0.1, t + 10, p, fontsize=6.5, alpha=0.85)
 cbar = plt.colorbar(sc, ax=ax, ticks=range(K_FINAL))
 cbar.set_label("K-Means Cluster")
@@ -472,7 +549,7 @@ plt.savefig("plot11_kmeans_cluster_sizes.png", dpi=150)
 plt.show()
 print("  -> Plot 11 saved: K-Means Cluster Sizes")
 
-# Plot 12 (Improved): Cluster Summary Table (REPLACES HEATMAP)
+# Plot 12: Cluster Summary Table (BETTER THAN HEATMAP)
 
 cluster_table = df_feat.groupby("km_cluster")[FEATURES].mean().round(2)
 
@@ -495,7 +572,6 @@ plt.title(f"K-Means Cluster Summary (k={K_FINAL}) — Actual Feature Values",
 
 plt.savefig("plot12_cluster_table.png", dpi=150)
 plt.show()
-print("  -> Plot 12 saved: Cluster Summary Table")
 
 # ============================================================
 # SECTION 5: HIERARCHICAL (AGGLOMERATIVE) CLUSTERING — CORRECTED
@@ -783,7 +859,8 @@ print("\nTarget planets in selected clusters:")
 for p in TARGET_PLANETS:
     row = earth_df[earth_df["pl_name"] == p]
     if not row.empty:
-        print(f"  + {p}")
+        ax.scatter(row["pl_rade"], row["pl_eqt"],
+                   color="black", s=80, marker="*", zorder=15)
 
 SUB_FEATURES = ["pl_rade", "pl_eqt", "pl_insol"]
 earth_sub    = earth_df[SUB_FEATURES].copy()
@@ -936,34 +1013,6 @@ if len(results) > 0:
     plt.show()
     print("  -> Plot 18 saved: Habitability Score Distribution + Top 20 Bar")
 
-# Plot: Top 20 Candidates Table
-top20 = results.head(20).copy()
-
-fig, ax = plt.subplots(figsize=(12, 6))
-ax.axis('off')
-
-table_data = top20[["pl_name", "pl_rade", "pl_eqt", "pl_insol", "habitability_score"]]
-
-table = ax.table(
-    cellText=table_data.values,
-    colLabels=table_data.columns,
-    loc='center'
-)
-
-table.auto_set_font_size(False)
-table.set_fontsize(8)
-table.scale(1, 1.5)
-
-# Color grading for score
-for i in range(len(table_data)):
-    score = table_data.iloc[i]["habitability_score"]
-    color = plt.cm.YlGn(score / 10)
-    table[(i+1, 4)].set_facecolor(color)
-
-plt.title("Top 20 Habitable Candidates (Detailed Table)", fontsize=13, fontweight="bold")
-plt.savefig("plotXX_table_top20.png", dpi=150)
-plt.show()
-
 # Plot 19: 3D Scatter
 if len(results) > 0:
     from mpl_toolkits.mplot3d import Axes3D
@@ -990,39 +1039,39 @@ if len(results) > 0:
     plt.show()
     print("  -> Plot 19 saved: 3D Habitability Scatter")
 
-# Plot 20 (FIXED): Radar charts (small multiples)
-top5 = results.head(5).copy()
+# Plot 20: Radar Chart (Top 5)
+if len(results) >= 3:
+    top5           = results.head(5).copy()
+    radar_features = ["pl_rade", "pl_eqt", "pl_insol", "pl_bmasse", "st_teff"]
+    ideal_vals     = [1.0, 288.0, 1.0, 1.0, 5778.0]
+    spreads        = [2.0, 300.0, 2.0, 10.0, 2000.0]
+    N      = len(radar_features)
+    angles = np.linspace(0, 2*np.pi, N, endpoint=False).tolist()
+    angles += angles[:1]
 
-radar_features = ["pl_rade", "pl_eqt", "pl_insol", "pl_bmasse", "st_teff"]
-ideal_vals = [1.0, 288.0, 1.0, 1.0, 5778.0]
-spreads = [2.0, 300.0, 2.0, 10.0, 2000.0]
-
-N = len(radar_features)
-angles = np.linspace(0, 2*np.pi, N, endpoint=False).tolist()
-angles += angles[:1]
-
-fig, axes = plt.subplots(1, 5, figsize=(20, 4), subplot_kw=dict(polar=True))
-
-for ax, (_, row) in zip(axes, top5.iterrows()):
-    pname = row["pl_name"]
-    prow = df_feat[df_feat["pl_name"] == pname].iloc[0]
-
-    vals = [max(0, 1 - abs(prow[f] - ideal_vals[i]) / spreads[i])
-            for i, f in enumerate(radar_features)]
-    vals += vals[:1]
-
-    ax.plot(angles, vals, linewidth=2)
-    ax.fill(angles, vals, alpha=0.2)
-    ax.set_title(pname, fontsize=9)
-
+    fig, ax = plt.subplots(figsize=(7, 7), subplot_kw=dict(polar=True))
+    colors_radar = plt.cm.Set1(np.linspace(0, 1, len(top5)))
+    for (_, row), clr in zip(top5.iterrows(), colors_radar):
+        pname = row["pl_name"]
+        prow  = df_feat[df_feat["pl_name"] == pname]
+        if prow.empty:
+            continue
+        prow = prow.iloc[0]
+        vals = [max(0, 1 - abs(prow[f] - ideal_vals[i]) / spreads[i])
+                for i, f in enumerate(radar_features)]
+        vals += vals[:1]
+        ax.plot(angles, vals, color=clr, linewidth=2, label=pname)
+        ax.fill(angles, vals, color=clr, alpha=0.1)
     ax.set_xticks(angles[:-1])
-    ax.set_xticklabels(["R","T","I","M","Star"], fontsize=7)
+    ax.set_xticklabels(["Radius","Eq Temp","Insolation","Mass","Star Temp"], fontsize=11)
     ax.set_ylim(0, 1)
-
-plt.suptitle("Radar Comparison of Top 5 Candidates", fontsize=13, fontweight="bold")
-plt.tight_layout()
-plt.savefig("plot20_radar_fixed.png", dpi=150)
-plt.show()
+    ax.set_title("Radar Chart: Top 5 Candidates\n(1 = Earth-identical)",
+                 fontsize=12, fontweight="bold", pad=20)
+    ax.legend(loc="upper right", bbox_to_anchor=(1.4, 1.1), fontsize=9)
+    plt.tight_layout()
+    plt.savefig("plot20_radar_top5.png", dpi=150)
+    plt.show()
+    print("  -> Plot 20 saved: Radar Chart (Top 5 Candidates)")
 
 # ============================================================
 # SECTION 8: OUTLIER DETECTION
@@ -1224,56 +1273,6 @@ plt.tight_layout()
 plt.savefig("plot25_nb_confusion_matrix.png", dpi=150)
 plt.show()
 print("  -> Plot 25 saved: Naive Bayes Confusion Matrix")
-
-# Plot: Confusion Matrix Comparison (DT vs NB)
-
-fig, axes = plt.subplots(1, 2, figsize=(10, 4))
-
-for ax, cm, title, names in [
-    (axes[0], cm_dt, "Decision Tree", target_names_dt),
-    (axes[1], cm_nb, "Naive Bayes", names_nb)
-]:
-    cm_pct = cm / cm.sum(axis=1, keepdims=True)
-
-    sns.heatmap(cm_pct, annot=True, fmt=".2%", cmap="Blues",
-                xticklabels=names, yticklabels=names, ax=ax)
-
-    ax.set_title(title)
-    ax.set_xlabel("Predicted")
-    ax.set_ylabel("Actual")
-
-plt.suptitle("Confusion Matrix Comparison (Percentages)",
-             fontsize=13, fontweight="bold")
-
-plt.tight_layout()
-plt.savefig("plotXX_confusion_compare.png", dpi=150)
-plt.show()
-print("  -> Plot saved: Confusion Matrix Comparison")
-
-from sklearn.metrics import precision_recall_curve, average_precision_score
-
-fig, ax = plt.subplots(figsize=(7, 5))
-
-for model, Xt, yt, label, clr in [
-    (dt, X_test, y_test, "Decision Tree", "#e74c3c"),
-    (nb, X_test_sc, y_test_sc, "Naive Bayes", "#3498db")
-]:
-    proba = model.predict_proba(Xt)[:, 1]
-    precision, recall, _ = precision_recall_curve(yt, proba)
-    ap = average_precision_score(yt, proba)
-
-    ax.plot(recall, precision, linewidth=2, label=f"{label} (AP={ap:.3f})")
-
-ax.set_xlabel("Recall")
-ax.set_ylabel("Precision")
-ax.set_title("Precision-Recall Curve", fontsize=12, fontweight="bold")
-ax.legend()
-ax.grid(True, alpha=0.3)
-
-plt.tight_layout()
-plt.savefig("plotXX_precision_recall.png", dpi=150)
-plt.show()
-print("  -> Plot saved: Precision-Recall Curve")
 
 # Plot 26: ROC Curves
 if len(present_classes) == 2 and len(present_nb) == 2:
