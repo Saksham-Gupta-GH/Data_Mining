@@ -164,17 +164,28 @@ plt.savefig("plot03_correlation_heatmap.png", dpi=150)
 plt.show()
 print("  -> Plot 3 saved: Correlation Heatmap")
 
-# Plot 4: Pairplot (core 5 features)
+# Plot 4 (Improved): Correlation Matrix (Core Features)
 core5 = ["pl_rade", "pl_eqt", "pl_insol", "pl_bmasse", "st_teff"]
-pair_df = df_feat[core5].copy()
-pair_df = pair_df[pair_df["pl_rade"] < 30]
-g = sns.pairplot(pair_df, diag_kind="kde",
-                 plot_kws={"alpha": 0.3, "s": 8, "color": "#2980b9"})
-g.fig.suptitle("Pairplot: Core 5 Habitability Features", y=1.01,
-               fontsize=13, fontweight="bold")
-plt.savefig("plot04_pairplot_core5.png", dpi=120, bbox_inches="tight")
+
+fig, ax = plt.subplots(figsize=(10, 8))
+corr = df_feat[core5].corr()
+
+sns.heatmap(
+    corr,
+    annot=True,
+    fmt=".2f",
+    cmap="coolwarm",
+    linewidths=0.5,
+    cbar_kws={"label": "Correlation"},
+    ax=ax
+)
+
+ax.set_title("Correlation Matrix (Core Habitability Features)",
+             fontsize=13, fontweight="bold")
+
+plt.tight_layout()
+plt.savefig("plot04_corr_core5.png", dpi=150)
 plt.show()
-print("  -> Plot 4 saved: Pairplot (core 5 features)")
 
 # Plot 5: Box Plots
 fig, axes = plt.subplots(1, 3, figsize=(16, 5))
@@ -213,6 +224,8 @@ for p in TARGET_PLANETS:
         r, t = row["pl_rade"].values[0], row["pl_eqt"].values[0]
         if r < 20 and t < 3000:
             ax.scatter(r, t, color="red", s=60, zorder=11, marker="D")
+
+            ax.text(r + 0.1, t + 10, p, fontsize=7, alpha=0.85)
 ax.set_xlabel("Planet Radius (Earth radii)", fontsize=11)
 ax.set_ylabel("Equilibrium Temperature (K)", fontsize=11)
 ax.set_title("Radius vs Temperature  (diamond = target planets)", fontsize=13, fontweight="bold")
@@ -429,6 +442,8 @@ for p in TARGET_PLANETS:
         r, t = row["pl_rade"].values[0], row["pl_eqt"].values[0]
         if r < 20 and t < 3000:
             ax.scatter(r, t, color="red", s=80, zorder=12, marker="D", linewidths=1)
+
+            ax.text(r + 0.1, t + 10, p, fontsize=6.5, alpha=0.85)
 cbar = plt.colorbar(sc, ax=ax, ticks=range(K_FINAL))
 cbar.set_label("K-Means Cluster")
 ax.set_xlabel("Planet Radius (Earth radii)", fontsize=11)
@@ -457,18 +472,30 @@ plt.savefig("plot11_kmeans_cluster_sizes.png", dpi=150)
 plt.show()
 print("  -> Plot 11 saved: K-Means Cluster Sizes")
 
-# Plot 12: Cluster Heatmap
-fig, ax = plt.subplots(figsize=(14, 7))
-km_norm = (km_stats - km_stats.min()) / (km_stats.max() - km_stats.min() + 1e-9)
-sns.heatmap(km_norm.T, annot=True, fmt=".2f", cmap="YlOrRd",
-            linewidths=0.5, ax=ax, annot_kws={"size": 8})
-ax.set_xlabel("Cluster", fontsize=11)
-ax.set_title(f"K-Means Cluster Profile — Normalized Feature Means (k={K_FINAL})",
-             fontsize=12, fontweight="bold")
-plt.tight_layout()
-plt.savefig("plot12_kmeans_cluster_heatmap.png", dpi=150)
+# Plot 12 (Improved): Cluster Summary Table (REPLACES HEATMAP)
+
+cluster_table = df_feat.groupby("km_cluster")[FEATURES].mean().round(2)
+
+fig, ax = plt.subplots(figsize=(14, 6))
+ax.axis('off')
+
+table = ax.table(
+    cellText=cluster_table.values,
+    colLabels=cluster_table.columns,
+    rowLabels=[f"Cluster {i}" for i in cluster_table.index],
+    loc='center'
+)
+
+table.auto_set_font_size(False)
+table.set_fontsize(8)
+table.scale(1, 1.5)
+
+plt.title(f"K-Means Cluster Summary (k={K_FINAL}) — Actual Feature Values",
+          fontsize=13, fontweight="bold")
+
+plt.savefig("plot12_cluster_table.png", dpi=150)
 plt.show()
-print("  -> Plot 12 saved: K-Means Cluster Heatmap")
+print("  -> Plot 12 saved: Cluster Summary Table")
 
 # ============================================================
 # SECTION 5: HIERARCHICAL (AGGLOMERATIVE) CLUSTERING — CORRECTED
@@ -909,6 +936,34 @@ if len(results) > 0:
     plt.show()
     print("  -> Plot 18 saved: Habitability Score Distribution + Top 20 Bar")
 
+# Plot: Top 20 Candidates Table
+top20 = results.head(20).copy()
+
+fig, ax = plt.subplots(figsize=(12, 6))
+ax.axis('off')
+
+table_data = top20[["pl_name", "pl_rade", "pl_eqt", "pl_insol", "habitability_score"]]
+
+table = ax.table(
+    cellText=table_data.values,
+    colLabels=table_data.columns,
+    loc='center'
+)
+
+table.auto_set_font_size(False)
+table.set_fontsize(8)
+table.scale(1, 1.5)
+
+# Color grading for score
+for i in range(len(table_data)):
+    score = table_data.iloc[i]["habitability_score"]
+    color = plt.cm.YlGn(score / 10)
+    table[(i+1, 4)].set_facecolor(color)
+
+plt.title("Top 20 Habitable Candidates (Detailed Table)", fontsize=13, fontweight="bold")
+plt.savefig("plotXX_table_top20.png", dpi=150)
+plt.show()
+
 # Plot 19: 3D Scatter
 if len(results) > 0:
     from mpl_toolkits.mplot3d import Axes3D
@@ -935,39 +990,39 @@ if len(results) > 0:
     plt.show()
     print("  -> Plot 19 saved: 3D Habitability Scatter")
 
-# Plot 20: Radar Chart (Top 5)
-if len(results) >= 3:
-    top5           = results.head(5).copy()
-    radar_features = ["pl_rade", "pl_eqt", "pl_insol", "pl_bmasse", "st_teff"]
-    ideal_vals     = [1.0, 288.0, 1.0, 1.0, 5778.0]
-    spreads        = [2.0, 300.0, 2.0, 10.0, 2000.0]
-    N      = len(radar_features)
-    angles = np.linspace(0, 2*np.pi, N, endpoint=False).tolist()
-    angles += angles[:1]
+# Plot 20 (FIXED): Radar charts (small multiples)
+top5 = results.head(5).copy()
 
-    fig, ax = plt.subplots(figsize=(7, 7), subplot_kw=dict(polar=True))
-    colors_radar = plt.cm.Set1(np.linspace(0, 1, len(top5)))
-    for (_, row), clr in zip(top5.iterrows(), colors_radar):
-        pname = row["pl_name"]
-        prow  = df_feat[df_feat["pl_name"] == pname]
-        if prow.empty:
-            continue
-        prow = prow.iloc[0]
-        vals = [max(0, 1 - abs(prow[f] - ideal_vals[i]) / spreads[i])
-                for i, f in enumerate(radar_features)]
-        vals += vals[:1]
-        ax.plot(angles, vals, color=clr, linewidth=2, label=pname)
-        ax.fill(angles, vals, color=clr, alpha=0.1)
+radar_features = ["pl_rade", "pl_eqt", "pl_insol", "pl_bmasse", "st_teff"]
+ideal_vals = [1.0, 288.0, 1.0, 1.0, 5778.0]
+spreads = [2.0, 300.0, 2.0, 10.0, 2000.0]
+
+N = len(radar_features)
+angles = np.linspace(0, 2*np.pi, N, endpoint=False).tolist()
+angles += angles[:1]
+
+fig, axes = plt.subplots(1, 5, figsize=(20, 4), subplot_kw=dict(polar=True))
+
+for ax, (_, row) in zip(axes, top5.iterrows()):
+    pname = row["pl_name"]
+    prow = df_feat[df_feat["pl_name"] == pname].iloc[0]
+
+    vals = [max(0, 1 - abs(prow[f] - ideal_vals[i]) / spreads[i])
+            for i, f in enumerate(radar_features)]
+    vals += vals[:1]
+
+    ax.plot(angles, vals, linewidth=2)
+    ax.fill(angles, vals, alpha=0.2)
+    ax.set_title(pname, fontsize=9)
+
     ax.set_xticks(angles[:-1])
-    ax.set_xticklabels(["Radius","Eq Temp","Insolation","Mass","Star Temp"], fontsize=11)
+    ax.set_xticklabels(["R","T","I","M","Star"], fontsize=7)
     ax.set_ylim(0, 1)
-    ax.set_title("Radar Chart: Top 5 Candidates\n(1 = Earth-identical)",
-                 fontsize=12, fontweight="bold", pad=20)
-    ax.legend(loc="upper right", bbox_to_anchor=(1.4, 1.1), fontsize=9)
-    plt.tight_layout()
-    plt.savefig("plot20_radar_top5.png", dpi=150)
-    plt.show()
-    print("  -> Plot 20 saved: Radar Chart (Top 5 Candidates)")
+
+plt.suptitle("Radar Comparison of Top 5 Candidates", fontsize=13, fontweight="bold")
+plt.tight_layout()
+plt.savefig("plot20_radar_fixed.png", dpi=150)
+plt.show()
 
 # ============================================================
 # SECTION 8: OUTLIER DETECTION
@@ -1169,6 +1224,56 @@ plt.tight_layout()
 plt.savefig("plot25_nb_confusion_matrix.png", dpi=150)
 plt.show()
 print("  -> Plot 25 saved: Naive Bayes Confusion Matrix")
+
+# Plot: Confusion Matrix Comparison (DT vs NB)
+
+fig, axes = plt.subplots(1, 2, figsize=(10, 4))
+
+for ax, cm, title, names in [
+    (axes[0], cm_dt, "Decision Tree", target_names_dt),
+    (axes[1], cm_nb, "Naive Bayes", names_nb)
+]:
+    cm_pct = cm / cm.sum(axis=1, keepdims=True)
+
+    sns.heatmap(cm_pct, annot=True, fmt=".2%", cmap="Blues",
+                xticklabels=names, yticklabels=names, ax=ax)
+
+    ax.set_title(title)
+    ax.set_xlabel("Predicted")
+    ax.set_ylabel("Actual")
+
+plt.suptitle("Confusion Matrix Comparison (Percentages)",
+             fontsize=13, fontweight="bold")
+
+plt.tight_layout()
+plt.savefig("plotXX_confusion_compare.png", dpi=150)
+plt.show()
+print("  -> Plot saved: Confusion Matrix Comparison")
+
+from sklearn.metrics import precision_recall_curve, average_precision_score
+
+fig, ax = plt.subplots(figsize=(7, 5))
+
+for model, Xt, yt, label, clr in [
+    (dt, X_test, y_test, "Decision Tree", "#e74c3c"),
+    (nb, X_test_sc, y_test_sc, "Naive Bayes", "#3498db")
+]:
+    proba = model.predict_proba(Xt)[:, 1]
+    precision, recall, _ = precision_recall_curve(yt, proba)
+    ap = average_precision_score(yt, proba)
+
+    ax.plot(recall, precision, linewidth=2, label=f"{label} (AP={ap:.3f})")
+
+ax.set_xlabel("Recall")
+ax.set_ylabel("Precision")
+ax.set_title("Precision-Recall Curve", fontsize=12, fontweight="bold")
+ax.legend()
+ax.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.savefig("plotXX_precision_recall.png", dpi=150)
+plt.show()
+print("  -> Plot saved: Precision-Recall Curve")
 
 # Plot 26: ROC Curves
 if len(present_classes) == 2 and len(present_nb) == 2:
