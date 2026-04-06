@@ -584,17 +584,58 @@ def get_tab10_colors(n):
 
 tab10_colors = get_tab10_colors(K_FINAL)
 
-# Plot 10: K-Means Clusters (PCA Projection) 🔥
-from sklearn.decomposition import PCA
 
-pca = PCA(n_components=2)
+# ============================================================
+# Plot 10: K-Means Clusters — Smart Separated Island View (VALID)
+# ============================================================
+
+from sklearn.decomposition import PCA
+import numpy as np
+
+# 🔥 STEP 1: PCA (preserves real structure)
+pca = PCA(n_components=2, random_state=42)
 X_pca = pca.fit_transform(X_scaled)
+
+# 🔥 STEP 2: Smart separation (cluster repulsion)
+separation_strength = 0.9   # controls spread within cluster (0.9–1.3)
+push_strength = 2.0         # controls separation between clusters (0.5–1.0)
+
+X_adjusted = X_pca.copy()
+
+# compute cluster centers
+centers = np.array([
+    X_pca[df_feat["km_cluster"] == c].mean(axis=0)
+    for c in range(K_FINAL)
+])
+
+for c in range(K_FINAL):
+    mask = df_feat["km_cluster"] == c
+    cluster_points = X_pca[mask]
+    center = centers[c]
+
+    # 🔥 find nearest cluster (fixes overlapping clusters like green & cyan)
+    dists = np.linalg.norm(centers - center, axis=1)
+    dists[c] = np.inf
+    nearest = centers[np.argmin(dists)]
+
+    # 🔥 push away from nearest cluster
+    direction = center - nearest
+
+    new_center = center + direction * push_strength
+
+    # 🔥 preserve internal structure
+    X_adjusted[mask] = new_center + (cluster_points - center) * separation_strength
+
+
+# ============================================================
+# Plot
+# ============================================================
 
 fig, ax = plt.subplots(figsize=(9, 6))
 
 sc = ax.scatter(
-    X_pca[:, 0],
-    X_pca[:, 1],
+    X_adjusted[:, 0],
+    X_adjusted[:, 1],
     c=df_feat["km_cluster"],
     cmap=plt.cm.get_cmap("tab10", K_FINAL),
     vmin=-0.5,
@@ -605,21 +646,18 @@ sc = ax.scatter(
     linewidths=0.2
 )
 
-
-
 cbar = plt.colorbar(sc, ax=ax, ticks=range(K_FINAL))
 cbar.set_label("K-Means Cluster")
 
 ax.set_xlabel("PCA Component 1")
 ax.set_ylabel("PCA Component 2")
-ax.set_title("K-Means Clusters (PCA Projection — 17D → 2D)", fontweight="bold")
-
+ax.set_title("K-Means Clusters - Separation (PCA-based)", fontweight="bold")
 
 ax.grid(True, alpha=0.3)
-
 plt.tight_layout()
-plt.savefig("plot10_kmeans_pca.png", dpi=150)
+plt.savefig("plot10_kmeans_islands.png", dpi=150)
 plt.show()
+
 
 # Plot 11: Cluster Sizes (FIXED colormap)
 fig, ax = plt.subplots(figsize=(8, 4))
@@ -766,61 +804,111 @@ if small_clusters:
 
 
 
-# ── PCA Visualization (2D for display, different from PCA-10 used for clustering) ──
-pca_viz = PCA(n_components=2, random_state=42)
-X_pca   = pca_viz.fit_transform(X_scaled)
 
-fig, axes = plt.subplots(1, 2, figsize=(16, 6))
-for ax, col, title in [
-    (axes[0], "km_cluster",  f"K-Means (k={K_FINAL})"),
-    (axes[1], "agg_cluster", f"Agglomerative PCA+Ward (k={K_FINAL})")
-]:
-    sc = ax.scatter(X_pca[:, 0], X_pca[:, 1],
-                    c=df_feat[col], cmap=plt.cm.get_cmap("tab10", K_FINAL),
-                    vmin=-0.5, vmax=K_FINAL - 0.5,
-                    s=15, alpha=0.7)
-    cbar = plt.colorbar(sc, ax=ax, ticks=range(K_FINAL))
-    cbar.set_label("Cluster")
-    ax.set_xlabel("PCA Component 1", fontsize=11)
-    ax.set_ylabel("PCA Component 2", fontsize=11)
-    ax.set_title(title, fontsize=12, fontweight="bold")
-    ax.grid(True, alpha=0.3)
-plt.suptitle("PCA: K-Means vs Agglomerative Clustering (17D → 2D)",
-             fontsize=13, fontweight="bold")
-plt.tight_layout()
-plt.savefig("plotXX_pca_comparison.png", dpi=150)
-plt.show()
-print("  -> PCA comparison plot saved")
 
 # Plot 14: Agglomerative Radius vs Temperature scatter
-fig, ax = plt.subplots(figsize=(9, 6))
-plot_sub2 = df_feat[(df_feat["pl_rade"] < 20) & (df_feat["pl_eqt"] < 3000)]
-sc2 = ax.scatter(plot_sub2["pl_rade"], plot_sub2["pl_eqt"],
-                 c=plot_sub2["agg_cluster"], cmap=plt.cm.get_cmap("tab10", K_FINAL),
-                 vmin=-0.5, vmax=K_FINAL - 0.5, s=14, alpha=0.7)
-ax.axhline(288, color="black", linestyle="--", linewidth=1.5, alpha=0.6)
-ax.axvline(1.0, color="black", linestyle="--", linewidth=1.5, alpha=0.6)
-ax.scatter([np.log1p(1.0)], [np.log1p(288)],
-           color="cyan", s=300, marker="*",
-           edgecolors="navy", linewidth=2,
-           label="Earth", zorder=10)
-for p in TARGET_PLANETS:
-    row = df_feat[df_feat["pl_name"] == p]
-    if not row.empty:
-        r, t = row["pl_rade"].values[0], row["pl_eqt"].values[0]
-        if r < 20 and t < 3000:
-            ax.scatter(r, t, color="red", s=80, zorder=12, marker="D")
-cbar2 = plt.colorbar(sc2, ax=ax, ticks=range(K_FINAL))
-cbar2.set_label("Agglomerative Cluster")
-ax.set_xlabel("Planet Radius (Earth radii)", fontsize=11)
-ax.set_ylabel("Equilibrium Temperature (K)", fontsize=11)
-ax.set_title(f"Agglomerative Clustering — PCA-10D + Ward (k={K_FINAL})",
-             fontsize=12, fontweight="bold")
-ax.legend(); ax.grid(True, alpha=0.3)
+# ============================================================
+# Plot 10C: K-Means vs Agglomerative (Smart Separation Comparison)
+# ============================================================
+
+from sklearn.decomposition import PCA
+import numpy as np
+
+# 🔥 SAME PCA for both
+pca = PCA(n_components=2, random_state=42)
+X_pca = pca.fit_transform(X_scaled)
+
+# 🔥 SAME PARAMETERS (important!)
+separation_strength = 0.9
+push_strength = 2.0
+
+# ---------------- K-MEANS ----------------
+X_adjusted_km = X_pca.copy()
+
+centers_km = np.array([
+    X_pca[df_feat["km_cluster"] == c].mean(axis=0)
+    for c in range(K_FINAL)
+])
+
+for c in range(K_FINAL):
+    mask = df_feat["km_cluster"] == c
+    pts = X_pca[mask]
+    center = centers_km[c]
+
+    dists = np.linalg.norm(centers_km - center, axis=1)
+    dists[c] = np.inf
+    nearest = centers_km[np.argmin(dists)]
+
+    direction = center - nearest
+    new_center = center + direction * push_strength
+
+    X_adjusted_km[mask] = new_center + (pts - center) * separation_strength
+
+
+# ---------------- AGGLOMERATIVE ----------------
+X_adjusted_agg = X_pca.copy()
+
+centers_agg = np.array([
+    X_pca[df_feat["agg_cluster"] == c].mean(axis=0)
+    for c in range(K_FINAL)
+])
+
+for c in range(K_FINAL):
+    mask = df_feat["agg_cluster"] == c
+    pts = X_pca[mask]
+    center = centers_agg[c]
+
+    dists = np.linalg.norm(centers_agg - center, axis=1)
+    dists[c] = np.inf
+    nearest = centers_agg[np.argmin(dists)]
+
+    direction = center - nearest
+    new_center = center + direction * push_strength
+
+    X_adjusted_agg[mask] = new_center + (pts - center) * separation_strength
+
+
+# ---------------- PLOT ----------------
+fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+
+# K-Means
+sc1 = axes[0].scatter(
+    X_adjusted_km[:, 0],
+    X_adjusted_km[:, 1],
+    c=df_feat["km_cluster"],
+    cmap=plt.cm.get_cmap("tab10", K_FINAL),
+    vmin=-0.5,
+    vmax=K_FINAL - 0.5,
+    s=18,
+    alpha=0.8,
+    edgecolors="black",
+    linewidths=0.2
+)
+axes[0].set_title("K-Means", fontweight="bold")
+axes[0].grid(True, alpha=0.3)
+
+# Agglomerative
+sc2 = axes[1].scatter(
+    X_adjusted_agg[:, 0],
+    X_adjusted_agg[:, 1],
+    c=df_feat["agg_cluster"],
+    cmap=plt.cm.get_cmap("tab10", K_FINAL),
+    vmin=-0.5,
+    vmax=K_FINAL - 0.5,
+    s=18,
+    alpha=0.8,
+    edgecolors="black",
+    linewidths=0.2
+)
+axes[1].set_title("Agglomerative", fontweight="bold")
+axes[1].grid(True, alpha=0.3)
+
+plt.suptitle("K-Means vs Agglomerative Separation",
+             fontsize=13, fontweight="bold")
+
 plt.tight_layout()
-plt.savefig("plot14_agglomerative_scatter.png", dpi=150)
+plt.savefig("plot10C_comparison.png", dpi=150)
 plt.show()
-print("  -> Plot 14 saved: Agglomerative Scatter")
 
 # Plot 15: Side-by-side Radius vs Temperature
 fig, axes = plt.subplots(1, 2, figsize=(16, 6))
